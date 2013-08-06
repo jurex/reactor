@@ -4,26 +4,22 @@ Created on 19.5.2013
 @author: Jurex
 '''
 # packet definition
-from zope.interface import Interface, implements
-from twisted.internet import protocol, reactor, defer
-
 from reactor import log, component
 from reactor.event import MessageInQueueEvent
 from reactor.message import Message
-from reactor.models.adapter import Adapter, IAdapter
+from reactor.models.adapter import Adapter
 
 from multiprocessing import Process
 from threading import Thread
 
-class NetworkAdapter(Thread):
-    
-    #implements(IAdapter)
+from socket import socket, AF_INET, SOCK_DGRAM
+
+class NetworkAdapter(Thread, Adapter):
     
     def __init__(self, queue):
         
         Thread.__init__(self)
         
-        self.protocol = DatagramProtocol(self)
         self.addresses = {} # dstAddress => ipAddress
         self.port = 4444
         self.name = "NetworkAdapter"
@@ -32,19 +28,44 @@ class NetworkAdapter(Thread):
         self.messagesIn = 0
         self.messagesOut = 0
         
+        self.socket = socket(AF_INET,SOCK_DGRAM);
+        
         # base class initialization
         
         
         log.debug('network adapter initlialized')
         
+    def listen(self):
+        
+        while True:
+            datagram, address = self.socket.recvfrom(1024) # buffer size is 1024 bytes
+            self.adapter.messagesIn += 1
+        
+            # parse message
+            message = Message()
+            message.unpack(datagram)
+            message.adapter = self.adapter
+            
+            log.debug("mesage received: " + message.toString() + " ip: " + str(address))
+            self.addAddress(message.src, address)
+            
+            self.queue.put(message)
+            
+            # fire event
+            #em = component.get("EventManager")
+            #em.fireEvent(MessageInQueueEvent(self.adapter))
+            
+            log.debug("datagram processing finished")
+            
+        
     def run(self):
         # start lan adapter
-        reactor.listenUDP(self.port, self.protocol)
+        self.socket.bind(("0.0.0.0",self.port))
+        
         log.debug('network adapter started on port: ' + str(self.port))
-        reactor.run(installSignalHandlers=False)
+        self.listen()
         
     def stop(self):
-        reactor.stop()
         pass
         
     def write(self, message):
@@ -53,7 +74,7 @@ class NetworkAdapter(Thread):
             log.error("unknown dst IP address for device " + str(message.dst))
             raise Exception("unknown dst IP address for device " + str(message.dst))
         
-        self.protocol.transport.write(message.pack(), address)
+        self.server.sendto(message.pack(), address)
         log.debug("message sent: " + message.toString() + " ip: " + str(address))
         self.messagesOut += 1
         
@@ -68,7 +89,8 @@ class NetworkAdapter(Thread):
         if( d.has_key("protocol")):
             d.pop("protocol") 
         return d
-        
+ 
+"""       
 class DatagramProtocol(protocol.DatagramProtocol):
     
     def __init__(self, adapter):
@@ -98,7 +120,7 @@ class DatagramProtocol(protocol.DatagramProtocol):
         # fire system event
         #reactor.addSystemEventTrigger('during', 'MessageReceivedEvent', processor.MessageReceivedEventHandler)
         #reactor.fireSystemEvent('MessageInQueueEvent') 
-    
+""" 
     
         
     

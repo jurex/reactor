@@ -42,7 +42,7 @@ class Application(object):
         self.messageQueue = MessageQueue()
         
         self.router = Router()
-        self.api = API()
+        # self.api = API()
         
         # init other managers
         self.eventManager = EventManager()

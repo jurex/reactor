@@ -5,8 +5,6 @@ import binascii
 import json
 import random
 
-from zope.interface import Interface, implements
-
 from pyasn1.type import univ
 from pyasn1.codec.ber import encoder, decoder
 from pyasn1.type import univ,namedtype,namedval,tag,constraint
@@ -17,20 +15,19 @@ from Queue import Queue
 import sys
 
 
-class IPacket(Interface):
+class Packet(object):
     
     def pack(self):
         """pack attributes to raw bytes"""
+        raise NotImplementedError( "Method not implemented" )
         
     def unpack(self, buffer):
         """unpack raw bytes to attributest"""
+        raise NotImplementedError( "Method not implemented" )
 
-class Message(object):
-    
-    implements(IPacket)
+class Message(Packet):
     
     def __init__(self, bytes = None):
-        
         # packet header      # 12 bytes
         self.syn = 81        # 1 bytes
         self.flg = 0         # 2 bytes

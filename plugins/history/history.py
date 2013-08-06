@@ -11,12 +11,12 @@ class HistoryPlugin(Plugin):
         Plugin.__init__(self, self.name)
         
         
-        app = component.get('API').app
+        #app = component.get('API').app
 
-        @app.route('/history', methods=['GET'])
+        #@app.route('/history', methods=['GET'])
         #@login_required
-        def get_history():
-            return JSONResponse(self.history)
+        #def get_history():
+        #   return JSONResponse(self.history)
     
     def start(self):
         log.info("plugin started: " + self.name)
