@@ -179,6 +179,7 @@ class Message(object):
         dict.pop("packet_header")
         dict.pop("packet")
         dict.pop("_packet_data")
+        dict.pop("adapter")
         return dict
         
     def toString(self):
@@ -241,20 +242,7 @@ class MessageQueue(component.Component):
     def size(self):
         return self.inputQueue.qsize()
     
-    
-class MessageHistory(component.Component):
-    def __init__(self):
-        self.messages = []
-        component.Component.__init__(self, "MessageHistory")
-        
-    def put(self, message):
-        try:
-            self.messages.append(message)
-        except: 
-            log.error("Unexpected error:" + sys.exc_info()[0])
-            
-    def size(self):
-            return len(self.messages)
+
         
     
     

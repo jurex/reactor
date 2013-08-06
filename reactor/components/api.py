@@ -1,6 +1,8 @@
 import os, flask, logging
 from reactor import log, component
 from gevent.wsgi import WSGIServer
+from flask import Flask
+from threading import Thread
 
 class API(component.Component):
     def __init__(self):
@@ -8,7 +10,8 @@ class API(component.Component):
         
         # init flask
         self.app = Flask(__name__)
-        
+        self.config = component.get("Config")
+        self.port = self.config.config.getint("api", "port")
         # init config
         #self.app.config.from_pyfile('../config/app.conf')
         
@@ -31,12 +34,17 @@ class API(component.Component):
         
         # init views
         from reactor.web.api import device
+        
+        log.debug("api initialized")
 
     def start(self):
+        t = Thread(target=self.run,args=())
+        t.start()
         
-        self.api_server = WSGIServer(('', 5000), self.app)
+    def run(self):
+        log.info("api started on port: " + str(self.port))
+        self.api_server = WSGIServer(('', self.port), self.app)
         self.api_server.serve_forever()
-
 
 
 """

@@ -1,6 +1,6 @@
 from reactor import log
 
-from reactor.message import MessageQueue, MessageHistory
+from reactor.message import MessageQueue
 
 from reactor import components
 from reactor.components.config import Config
@@ -40,7 +40,6 @@ class Application(object):
         # init core parts 
         
         self.messageQueue = MessageQueue()
-        self.messageHistory = MessageHistory()
         
         self.router = Router()
         self.api = API()
@@ -66,16 +65,13 @@ class Application(object):
         # init complete
         log.debug("application initialized")
         
-        
-            
-
         try:
             # start components
             components.start()
             log.info("application started") 
             
             # run blocking queue
-            #self.router.ProcessQueue()
+            self.router.ProcessQueue()
             
         finally:
             self.shutdown()
