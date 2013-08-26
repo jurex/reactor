@@ -1,60 +1,66 @@
-from reactor import log, component
+from reactor import component
+from reactor import utils
+from reactor.messages import commands
+from reactor.messages import events
+import logging
+import zmq
+import json
 
-import time, sys, thread
+logger = logging.getLogger("Router")
 
 class Router(component.Component):
     def __init__(self):
         component.Component.__init__(self, "Router")
 
     def start(self):
-        
-        # register event
-        #manager = component.get("EventManager")
-        #manager.register_event_handler("MessageInQueueEvent", self.onMessageInQueueEventHandler)
-        
-        #log.info("virtual router started")
-        #self.ProcessQueue()
         pass
         
-
-    def onMessageInQueueEventHandler(self, adapter):
-    
-        log.debug("MessageInQueueEvent fired")
-        #reactor.callInThread(ProcessMessageQueue)
-        #reactor.callLater(4,ProcessMessageQueue)
-        
-        #reactor.callLater(0, self.ProcessMessageQueue)
-        
-        #d = maybeDeferred(self.ProcessMessageQueue)
-        #self.ProcessMessageQueue()
         
         
     def ProcessQueue(self):
         
         # get message from messagequeue
-        queue = component.get("MessageQueue")
+        # queue = component.get("MessageQueue")
+        
+        config = component.get("Config")
+        zmq_request_addr = config.get("core.zmq_addr")
+        
+        context = zmq.Context()
+        zmq_socket = context.socket(zmq.ROUTER)
+        zmq_socket.bind(zmq_request_addr)
         
         #print "router thread: " + str(thread.get_ident())
         
-        log.info("starting processing queue")
+        logger.info("Starting processing messages")
         
         # infinite loop
         while 1:
       
-            # get message from queue => blocking function
-            message = queue.get()
+            # receive message
             
-            log.debug("message removed from queue. queuesize: " + str(queue.size()))
+            _id = zmq_socket.recv()
+            msg_json = zmq_socket.recv()
+            msg = utils.decode_message(msg_json)
+            
+            
+            #log.debug("message removed from queue. queuesize: " + str(queue.size()))
+            
+            logger.debug("Message received (" + _id + "): " + str(msg.to_json()))
+            
+            
+            # send ack
+            #zmq_socket.send(_id, zmq.SNDMORE)
+            #zmq_socket.send("ok")
             
             # process message
-            self.ProcessMessage(message)
+            #self.ProcessMessage(message)
             
-            log.debug("finished processing message")
+            logger.debug("Message processing finished")
         
     
     def ProcessMessage(self, message):
     
-        log.debug("processing message: " + message.toString())
+        logger.debug("processing message: " + message.to_string())
     
         #time.sleep(1)
     
@@ -81,6 +87,6 @@ class Router(component.Component):
             return
         
         # unknown route
-        log.error("no route found for id/address: " + str(message.dst))
+        logger.error("no route found for id/address: " + str(message.dst))
         return
         

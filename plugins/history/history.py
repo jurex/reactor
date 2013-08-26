@@ -1,7 +1,9 @@
-from reactor import log, component, event
+from reactor import  component
 from reactor.web.utils import JSONResponse
 from reactor.components.plugin import Plugin
 
+import logging
+logger = logging.getLogger("HistoryPlugin")
 
 class HistoryPlugin(Plugin):
     
@@ -19,11 +21,9 @@ class HistoryPlugin(Plugin):
         #   return JSONResponse(self.history)
     
     def start(self):
-        log.info("plugin started: " + self.name)
+        logger.info("Plugin started")
         
         # register event handlers
-        em = component.get("EventManager")
-        em.registerEventHandler("MessageReceivedEvent", self.onMessageReceivedHandler)
     
     def stop(self):
         pass
@@ -32,5 +32,5 @@ class HistoryPlugin(Plugin):
         pass
     
     def onMessageReceivedHandler(self, source, message):
-        self.history.append(message.toDictonary())
-        log.debug("message added to history")
+        self.history.append(message.to_dict())
+        logger.debug("message added to history")

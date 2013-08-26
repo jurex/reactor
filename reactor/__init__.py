@@ -1,3 +1,3 @@
-from reactor.application import Application;
+import logging
 
-app = Application()
+logger = logging.getLogger("Reactor")

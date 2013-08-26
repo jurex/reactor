@@ -1,9 +1,11 @@
-from reactor import log, component
+from reactor import component
+
+import logging
+logger = logging.getLogger("PluginManager")
 
 # custom plugins: TODO: auto import by name
-
-from plugins.history.history import *
-from plugins.echo.echo import *
+from plugins.echo.echo import EchoPlugin
+from plugins.history.history import HistoryPlugin
 
 class PluginManager(component.Component):
     def __init__(self):
@@ -25,7 +27,7 @@ class PluginManager(component.Component):
         
     def register(self, plugin):
         self.plugins.append(plugin)
-        log.debug("plugin registred: %s", plugin.name)
+        logger.debug("Plugin registred: %s", plugin.name)
         
     def getPluginByName(self, name):
         for plugin in self.plugins:

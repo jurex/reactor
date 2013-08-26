@@ -3,7 +3,7 @@
 import sys
 sys.path.append("../")
 
-from reactor.message import Message
+from reactor.packet import Packet
 import time
 
 from twisted.internet.protocol import DatagramProtocol
@@ -17,34 +17,34 @@ class WhistlerDatagramProtocol(DatagramProtocol):
     def datagramReceived(self, datagram, host):
         #print 'Datagram received: ', repr(datagram)
         
-        msg = Message()
-        msg.unpack(datagram)
-        print "Message received: " +  msg.toString()
+        packet = Packet()
+        packet.unpack(datagram)
+        print "Packet received: " +  packet.to_string()
 
 def main():
     protocol = WhistlerDatagramProtocol()
     t = reactor.listenUDP(0, protocol)
     
-    tsk = task.LoopingCall(sendMessage, protocol)
+    tsk = task.LoopingCall(send_packet, protocol)
     tsk.start(1)
     
     #reactor.callInThread(sendMessagesForever(protocol))
     reactor.run()
     
-def sendMessage(protocol):
-    msg = Message()
-    msg.src = 25
-    msg.dst = 1
-    msg.cmd = 1
-    msg.addVariable("hellou", "world")
+def send_packet(protocol):
+    packet = Packet()
+    packet.src = 25
+    packet.dst = 1
+    packet.cmd = 1
+    packet.add_variable("hellou", "world")
     """
-    message.addVariable("int", 221)
-    message.addVariable("bool", False)
-    message.addVariable("float", 1.1)
-    message.addVariable("empty", None)
+    message.add_variable("int", 221)
+    message.add_variable("bool", False)
+    message.add_variable("float", 1.1)
+    message.add_variable("empty", None)
     """
-    protocol.transport.write(msg.toBytes())
-    print "Message sent: " + msg.toString()
+    protocol.transport.write(packet.to_bytes())
+    print "Packet sent: " + packet.to_string()
 
 if __name__ == '__main__':
     main()

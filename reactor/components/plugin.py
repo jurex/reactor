@@ -1,4 +1,3 @@
-from reactor import log
 
 class Plugin(object):
     

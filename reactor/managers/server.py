@@ -1,5 +1,8 @@
-from reactor import log, component
+from reactor import component
 from reactor.models.server import Server
+
+import logging
+logger = logging.getLogger("ServerManager")
 
 class ServerManager(component.Component):
     def __init__(self):
@@ -19,7 +22,7 @@ class ServerManager(component.Component):
         
     def register(self, server):
         self.servers.append(server)
-        log.debug("server registred: " + server.name)
+        logger.debug("Server registred: " + server.name)
         
     def getServerByAddress(self,  address):
         for server in self.servers:

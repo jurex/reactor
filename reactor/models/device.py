@@ -13,7 +13,7 @@ class Device(object):
     def getStatus(self):
         return "Status OK"
     
-    def toDictonary(self):
+    def to_dict(self):
         d = self.__dict__.copy()
         if( d.has_key("adapter")):
             d.pop("adapter") 

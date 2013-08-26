@@ -1,5 +1,8 @@
-from reactor import log, component
-from reactor.event import MessageReceivedEvent
+from reactor import component
+
+import logging
+logger = logging.getLogger("Server")
+
 
 class Server(object):
     def __init__(self, name):
@@ -9,10 +12,10 @@ class Server(object):
         self.name = name
         
     def start(self):
-        log.info("virtual server started: " + self.name)
+        logger.info("virtual server started: " + self.name)
     
     def stop(self):
-        log.info("virtual server stopped: " + self.name)
+        logger.info("virtual server stopped: " + self.name)
         pass
     
     def onMessageReceived(self, message):
@@ -23,7 +26,7 @@ class Server(object):
         device = dm.getDeviceByAddress(message.src)
         
         if (device == None):
-            log.debug("device not found: %s", message.src)
+            logger.debug("device not found: %s", message.src)
             
             # create new device
             # TODO: craete only device if association completed
@@ -33,7 +36,7 @@ class Server(object):
 
         # fire events
         em = component.get("EventManager")
-        em.fireEvent(MessageReceivedEvent(self, message))
+      #  em.fireEvent(MessageReceivedEvent(self, message))
     
     
         

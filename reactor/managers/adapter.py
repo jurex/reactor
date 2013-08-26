@@ -1,5 +1,8 @@
-from reactor import log, component
+from reactor import component
 from reactor.adapters.network import NetworkAdapter
+
+import logging
+logger = logging.getLogger("AdapterManager")
 
 class AdapterManager(component.Component):
     def __init__(self):
@@ -8,8 +11,7 @@ class AdapterManager(component.Component):
         # TODO: add adapters based on config or options
         
         # crate network adapter
-        mq = component.get("MessageQueue")
-        networkAdapter = NetworkAdapter(mq)
+        networkAdapter = NetworkAdapter()
         self.register(networkAdapter)
         
         # create RFM12B adapter
@@ -21,7 +23,7 @@ class AdapterManager(component.Component):
         
     def register(self, adapter):
         self.adapters.append(adapter)
-        log.debug(adapter.name + " registred")
+        logger.debug(adapter.name + " registred")
         
     def unregister(self, adapter):
         pass

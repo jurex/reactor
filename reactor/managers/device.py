@@ -1,5 +1,8 @@
-from reactor import log, component
+from reactor import component
 from reactor.models.device import Device
+
+import logging
+logger = logging.getLogger("DeviceManager")
 
 class DeviceManager(component.Component):
     def __init__(self):
@@ -16,7 +19,7 @@ class DeviceManager(component.Component):
             device.adapter = adapter
             device.server = server
             self.devices.append(device)
-            log.debug("Device \""+str(address)+"\" registred")
+            logger.debug("Device \""+str(address)+"\" registred")
     
     def getDeviceByAddress(self,  address):
         for device in self.devices:

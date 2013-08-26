@@ -1,8 +1,8 @@
 #
 # component.py
 #
-
-from reactor import log
+import logging
+logger = logging.getLogger("component")
 
 class ComponentAlreadyRegistered(Exception):
     pass
@@ -30,7 +30,7 @@ class Component(object):
             return True
             
 
-        log.error("Cannot start a component not in a Stopped state!")
+        logger.error("Cannot start a component not in a Stopped state!")
         return False;
 
     def _component_stop(self):
@@ -47,7 +47,7 @@ class Component(object):
         elif self._component_state == "Stopped":
             return True
 
-        log.error("Cannot start a component not in a Started state!")
+        logger.error("Cannot start a component not in a Started state!")
         return False
 
     def _component_shutdown(self):
@@ -90,7 +90,7 @@ class ComponentManager(object):
         """
 
         if name in self.components:
-            log.debug("Unregistering Component: %s", name)
+            logger.debug("Unregistering Component: %s", name)
             self.stop([name])
             del self.components[name]
 

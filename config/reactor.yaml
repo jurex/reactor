@@ -1,0 +1,24 @@
+# 
+# reactor default config file
+#
+logging:
+  level: debug
+  # file:  ../app.log
+
+core:
+  addr: 1
+  zmq_addr: tcp://127.0.0.1:6000
+ 
+adapters:
+  network:
+    interface: "0.0.0.0"
+    port: 4444
+    zmq_addr: tcp://127.0.0.1:6001
+    
+  rfm12b:
+    device: /dev/tty1
+    zmq_addr: tcp://127.0.0.1:6002
+        
+plugins:
+  history:
+  echo:

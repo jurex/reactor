@@ -1,5 +1,8 @@
-from reactor import log, component, event
+from reactor import component
 from reactor.components.plugin import Plugin
+
+import logging
+logger = logging.getLogger("EchoPlugin")
 
 class EchoPlugin(Plugin):
     
@@ -9,11 +12,9 @@ class EchoPlugin(Plugin):
     
     def start(self):
         
-        log.info("plugin started: " + self.name)
+        logger.info("Plugin started")
         
         # register event handlers
-        em = component.get("EventManager")
-        em.registerEventHandler("MessageReceivedEvent", self.onMessageReceivedHandler)
     
     def stop(self):
         pass
@@ -36,4 +37,4 @@ class EchoPlugin(Plugin):
         if (device != None):
             device.send(message)
         else:
-            log.error("Device not found: %s ", src)
+            logger.error("Device not found: %s ", src)
