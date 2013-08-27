@@ -21,17 +21,17 @@ class DeviceManager(component.Component):
             self.devices.append(device)
             logger.debug("Device \""+str(address)+"\" registred")
     
-    def getDeviceByAddress(self,  address):
+    def get_device_by_address(self,  address):
         for device in self.devices:
             if (device.address == address):
                 return device;
             
-    def getDeviceById(self,  _id):
+    def get_device_by_id(self,  _id):
         for device in self.devices:
             if (device.id == _id):
                 return device;
             
-    def getDevice(self, id_or_address):
+    def get_device(self, id_or_address):
         if (isinstance(id_or_address, (int))):
             return self.getDeviceById(id_or_address)
         else:

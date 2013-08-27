@@ -1,14 +1,19 @@
 from reactor import component
+from reactor.managers.device import DeviceManager
 
 import logging
 logger = logging.getLogger("Core")
 
-class Core(object):
-    def __init__(self, name):
+class Core(component.Component):
+    def __init__(self):
+        component.Component.__init__(self, "Router")
         
         self.id = 1
         self.address = 1
-        self.name = name
+        self.device_manager = DeviceManager()
+        
+    def get_device_manager(self):
+        return self.device_manager
         
     def start(self):
         logger.info("Started: " + self.name)
@@ -17,8 +22,15 @@ class Core(object):
         logger.info("Stopped: " + self.name)
         pass
     
-    def process_request(self, request):
+    def process(self, msg):
         pass
+    
+    def process_event(self, msg):
+        pass
+    
+    def process_command(self, msg):
+        pass
+    
     
     def onMessageReceived(self, message):
         

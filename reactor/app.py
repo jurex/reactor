@@ -41,8 +41,6 @@ class App(object):
         self.router = Router()
         
         # init other managers
-        self.serverManager = ServerManager()
-        self.deviceManager = DeviceManager()
         self.adapterManager = AdapterManager()
         self.pluginManager = PluginManager()
         
@@ -62,8 +60,8 @@ class App(object):
             components.start()
             logger.info("All compnents started") 
             
-            # run blocking queue
-            self.router.ProcessQueue()
+            # start router / blocking call
+            self.router.run()
             
         finally:
             self.shutdown()

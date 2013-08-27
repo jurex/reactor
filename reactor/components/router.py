@@ -17,10 +17,7 @@ class Router(component.Component):
         
         
         
-    def ProcessQueue(self):
-        
-        # get message from messagequeue
-        # queue = component.get("MessageQueue")
+    def run(self):
         
         config = component.get("Config")
         zmq_request_addr = config.get("core.zmq_addr")
@@ -37,30 +34,26 @@ class Router(component.Component):
         while 1:
       
             # receive message
-            
             _id = zmq_socket.recv()
             msg_json = zmq_socket.recv()
             msg = utils.decode_message(msg_json)
-            
-            
-            #log.debug("message removed from queue. queuesize: " + str(queue.size()))
+    
             
             logger.debug("Message received (" + _id + "): " + str(msg.to_json()))
-            
             
             # send ack
             #zmq_socket.send(_id, zmq.SNDMORE)
             #zmq_socket.send("ok")
             
             # process message
-            #self.ProcessMessage(message)
+            self.process(msg)
             
             logger.debug("Message processing finished")
         
     
-    def ProcessMessage(self, message):
+    def process(self, msg):
     
-        logger.debug("processing message: " + message.to_string())
+        logger.debug("Routing message: " + msg.to_string())
     
         #time.sleep(1)
     
@@ -70,8 +63,8 @@ class Router(component.Component):
         
         # message routing start here
         
-        sm = component.get("ServerManager")
-        dm = component.get("DeviceManager")
+        core = component.get("Core")
+        dm = core.get_device_manager()
         
         server = sm.getServer(message.dst)
         
