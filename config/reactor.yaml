@@ -3,7 +3,7 @@
 #
 logging:
   level: debug
-  # file:  ../app.log
+  # file:  ../app.log      
 
 core:
   addr: 1

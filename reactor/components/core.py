@@ -6,30 +6,25 @@ logger = logging.getLogger("Core")
 
 class Core(component.Component):
     def __init__(self):
-        component.Component.__init__(self, "Router")
+        component.Component.__init__(self, "Core")
         
         self.id = 1
         self.address = 1
-        self.device_manager = DeviceManager()
-        
-    def get_device_manager(self):
-        return self.device_manager
-        
-    def start(self):
-        logger.info("Started: " + self.name)
     
-    def stop(self):
-        logger.info("Stopped: " + self.name)
-        pass
-    
-    def process(self, msg):
-        pass
+    def process(self, msg, src):
+        if(msg.type == "event"):
+            return self.process_event(msg)
+
+        if(msg.type == "command"):
+            return self.process_command(msg)
+            
+        raise NameError("Unknown message type")
     
     def process_event(self, msg):
-        pass
+        logger.debug("Processing event: " + msg.uuid)
     
     def process_command(self, msg):
-        pass
+        logger.debug("Processing command: " + msg.uuid)
     
     
     def onMessageReceived(self, message):

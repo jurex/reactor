@@ -4,10 +4,10 @@ import yaml
 from reactor import components
 from reactor.components.router import Router
 from reactor.components.config import Config
+from reactor.components.core import Core
 
-from reactor.managers.device import DeviceManager
-from reactor.managers.server import ServerManager
 from reactor.managers.plugin import PluginManager
+from reactor.managers.device import DeviceManager
 from reactor.managers.adapter import AdapterManager
 
 from reactor import logger
@@ -38,19 +38,19 @@ class App(object):
         logger.info("Version: " + self.version)
         
         # init core parts 
+        self.core = Core();
         self.router = Router()
         
         # init other managers
-        self.adapterManager = AdapterManager()
-        self.pluginManager = PluginManager()
+        self.adapters = AdapterManager()
+        self.devices = DeviceManager()
+        self.plugins = PluginManager()
         
         
         # load plugins
         # TODO: load plugins from config
-        self.pluginManager.load("History")
-        self.pluginManager.load("Echo")
-        
-        #print "Application thread: " + str(thread.get_ident())
+        self.plugins.load("History")
+        self.plugins.load("Echo")
         
         # init complete
         logger.debug("App initialized")

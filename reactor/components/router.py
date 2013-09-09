@@ -15,16 +15,14 @@ class Router(component.Component):
     def start(self):
         pass
         
-        
-        
     def run(self):
         
         config = component.get("Config")
-        zmq_request_addr = config.get("core.zmq_addr")
+        zmq_addr = config.get("core.zmq_addr")
         
-        context = zmq.Context()
-        zmq_socket = context.socket(zmq.ROUTER)
-        zmq_socket.bind(zmq_request_addr)
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.ROUTER)
+        self.zmq_socket.bind(zmq_addr)
         
         #print "router thread: " + str(thread.get_ident())
         
@@ -34,52 +32,29 @@ class Router(component.Component):
         while 1:
       
             # receive message
-            _id = zmq_socket.recv()
-            msg_json = zmq_socket.recv()
+            src = self.zmq_socket.recv()
+            msg_json = self.zmq_socket.recv()
             msg = utils.decode_message(msg_json)
     
-            
-            logger.debug("Message received (" + _id + "): " + str(msg.to_json()))
-            
-            # send ack
-            #zmq_socket.send(_id, zmq.SNDMORE)
-            #zmq_socket.send("ok")
-            
+            logger.debug("Message received (" + src + "): " + str(msg.to_json()))
+        
             # process message
-            self.process(msg)
-            
-            logger.debug("Message processing finished")
+            self.process(msg, src)
+
+    def process(self, msg, src):
+    
+        logger.debug("Routing message: " + msg.uuid)
         
-    
-    def process(self, msg):
-    
-        logger.debug("Routing message: " + msg.to_string())
-    
-        #time.sleep(1)
-    
-        # put message to history
-        #history = component.get("MessageHistory")
-        #history.put(message)
-        
-        # message routing start here
-        
+        # get components
         core = component.get("Core")
-        dm = core.get_device_manager()
+        devices = component.get("DeviceManager")
+
+        # TODO: packet routing
+      
+        # dispatch message to core
+        core.process(msg, src)
         
-        server = sm.getServer(message.dst)
-        
-        # dst => registred server
-        if (server != None):    
-            server.onMessageReceived(message)
-            return
-        
-        # dst => registred device
-        device = dm.getDevice(message.dst)
-        if (device != None):
-            device.send(message)
-            return
-        
-        # unknown route
-        logger.error("no route found for id/address: " + str(message.dst))
-        return
+    def send(self, msg, dst):
+        self.zmq_socket.send(dst, zmq.SNDMORE)
+        return self.zmq_socket.send(msg.to_json())
         

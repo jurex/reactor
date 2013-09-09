@@ -1,5 +1,7 @@
 from reactor import component
-from reactor.components.plugin import Plugin
+from reactor.models.plugin import Plugin
+from reactor.messages import events
+from reactor.messages import commands
 
 import logging
 logger = logging.getLogger("EchoPlugin")
@@ -7,22 +9,25 @@ logger = logging.getLogger("EchoPlugin")
 class EchoPlugin(Plugin):
     
     def __init__(self):
-        self.name = "Echo"
-        Plugin.__init__(self, self.name)
+        Plugin.__init__(self, "EchoPlugin")
     
-    def start(self):
+    def run(self):
+        # send ready
+        msg = events.PluginReady()
+        msg.src = self._name
+        msg.dst = "Core"
+            
+        # send request to core
+        self.zmq_socket.send(msg.to_json())
         
         logger.info("Plugin started")
         
-        # register event handlers
+        while True:
+            msg = self.zmq_socket.recv();
+            logger.debug("Message Received: " + msg.uuid)
     
-    def stop(self):
-        pass
     
-    def shutdown(self):
-        pass
-    
-    def onMessageReceivedHandler(self, source, message):
+    def receiver(self, source, message):
         
         # reply message
         src = message.src

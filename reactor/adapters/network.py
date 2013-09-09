@@ -31,34 +31,33 @@ class NetworkAdapter(Adapter):
         self.zmq_context = zmq.Context()
         self.zmq_addr = config.get('adapters.network.zmq_addr', 'tcp://127.0.0.1:6001')
         
+        # create udp socket
         self.socket = socket(AF_INET,SOCK_DGRAM)
         
-        # base class initialization
+        # create zmq socket
+        zmq_core_addr = config.get('core.zmq_addr')
+        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
+        self.zmq_socket.setsockopt(zmq.IDENTITY, self.name)
+        self.zmq_socket.connect(zmq_core_addr)
         
         logger.debug('Adapter initlialized')
         
-    def receiver(self, socket):
+    def receiver(self, socket, zmq_socket):
         
         #time.sleep(2)
-        
         config = component.get("Config")
         
+        # bind udp listener
         interface = config.get('adapters.network.interface', '0.0.0.0')
         port = config.get('adapters.network.port', '4444')
-        zmq_core_request_addr = config.get('core.zmq_addr')
-        
-        
         socket.bind((interface, port))
+        
         logger.debug('Network adapter binded on port: ' + str(port))
-        
-        
-        zmq_socket = self.zmq_context.socket(zmq.DEALER)
-        zmq_socket.setsockopt(zmq.IDENTITY, self.name)
-        zmq_socket.connect(zmq_core_request_addr)
         
         # send ready
         msg = events.AdapterReady()
         msg.src = self.name
+        msg.dst = "Core"
             
         # send request to core
         zmq_socket.send(msg.to_json())
@@ -77,6 +76,7 @@ class NetworkAdapter(Adapter):
             # create message
             msg = events.PacketReceived()
             msg.src = self.name
+            msg.packet = packet.to_json();
             
             # send request to core
             zmq_socket.send(msg.to_json())
@@ -86,28 +86,19 @@ class NetworkAdapter(Adapter):
             
             logger.debug("Datagram processing finished")
             
-    def sender(self, socket):
+    def sender(self, socket, zmq_socket):
         logger.debug('Waiting for messages to send')
-        
-        config = component.get("Config")
-        zmq_addr = config.get('adapters.network.zmq_addr')
-        
-        zmq_socket = self.zmq_context.socket(zmq.REP)
-        zmq_socket.bind(zmq_addr)
         
         while True:
             data = zmq_socket.recv();
             print "Sending data: " + data
         
     def start(self):
-        # start network adapter
-        
-        
-        
-        self.receiver_thread = Thread(target=self.receiver, args=(self.socket,))
+        # start adapter threads
+        self.receiver_thread = Thread(target=self.receiver, args=(self.socket,self.zmq_socket,))
         self.receiver_thread.start()
         
-        self.sender_thread = Thread(target=self.sender, args=(self.socket,))
+        self.sender_thread = Thread(target=self.sender, args=(self.socket,self.zmq_socket,))
         self.sender_thread.start()
         
     def stop(self):

@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-import sys, os
-sys.path.append("../")
+#!/usr/bin/python
 
-#from whistler.factory import DefaultFactory
-from whistler import main
-
+from reactor.app import App
 
 if __name__ == '__main__':
-    #start server
-    main.start_server()
-
+    # init core
+    app = App()
+    
+    # run core
+    app.run() 
