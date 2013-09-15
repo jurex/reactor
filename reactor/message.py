@@ -22,7 +22,7 @@ class Message(object):
     def to_dict(self):
         fields = self.__dict__.copy()
         fields['class'] = self.__class__.__name__
-        # dict.pop("packet_header_struct")
+        fields['type'] = 'message'
         return fields 
         
     def to_string(self):

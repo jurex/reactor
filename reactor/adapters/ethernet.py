@@ -6,6 +6,7 @@ Created on 19.5.2013
 # packet definition
 from reactor import component
 from reactor.packet import Packet
+from reactor import utils
 from reactor.models.adapter import Adapter
 from reactor.messages import events
 from reactor.messages import commands
@@ -17,16 +18,16 @@ import time
 from threading import Thread
 from socket import socket, AF_INET, SOCK_DGRAM
 
-logger = logging.getLogger("NetworkAdapter")
+logger = logging.getLogger("EthernetAdapter")
 
-class NetworkAdapter(Adapter):
+class EthernetAdapter(Adapter):
     
     def __init__(self):
         
         config = component.get("Config")
         
         self.addresses = {} # dstAddress => ipAddress
-        self.name = "NetworkAdapter"
+        self.name = "EthernetAdapter"
         
         self.zmq_context = zmq.Context()
         self.zmq_addr = config.get('adapters.network.zmq_addr', 'tcp://127.0.0.1:6001')
@@ -48,11 +49,11 @@ class NetworkAdapter(Adapter):
         config = component.get("Config")
         
         # bind udp listener
-        interface = config.get('adapters.network.interface', '0.0.0.0')
-        port = config.get('adapters.network.port', '4444')
+        interface = config.get('adapters.ethernet.interface', '0.0.0.0')
+        port = config.get('adapters.ethernet.port', '4444')
         socket.bind((interface, port))
         
-        logger.debug('Network adapter binded on port: ' + str(port))
+        logger.debug('Binded on port: ' + str(port))
         
         # send ready
         msg = events.AdapterReady()
@@ -64,7 +65,7 @@ class NetworkAdapter(Adapter):
         
         while True:
             # blocking read
-            datagram, address = self.socket.recvfrom(1024) # buffer size is 1024 bytes
+            datagram, address = socket.recvfrom(1024) # buffer size is 1024 bytes
         
             # parse message
             packet = Packet()
@@ -76,7 +77,7 @@ class NetworkAdapter(Adapter):
             # create message
             msg = events.PacketReceived()
             msg.src = self.name
-            msg.packet = packet.to_json();
+            msg.packet = packet.to_dict();
             
             # send request to core
             zmq_socket.send(msg.to_json())
@@ -84,14 +85,24 @@ class NetworkAdapter(Adapter):
             # wait for core response
             # zmq_socket.recv()
             
-            logger.debug("Datagram processing finished")
+            #logger.debug("Datagram processing finished")
             
     def sender(self, socket, zmq_socket):
         logger.debug('Waiting for messages to send')
         
         while True:
-            data = zmq_socket.recv();
-            print "Sending data: " + data
+            msg_json = zmq_socket.recv()
+            msg = utils.decode_message(msg_json)
+            
+            if(msg.__class__.__name__ == "PacketSend"):
+                packet = Packet()
+                packet.__dict__ = msg.packet
+                
+                logger.debug("Sending packet: " + packet.to_json())
+                continue
+                
+            logger.error("No action for message found!")
+            
         
     def start(self):
         # start adapter threads

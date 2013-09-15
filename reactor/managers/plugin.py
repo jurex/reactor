@@ -16,6 +16,7 @@ class PluginManager(component.Component):
         
     def start(self):
         for plugin in self.plugins:
+            plugin.daemon = True;
             plugin.start()
         
     # load plugin by name
@@ -29,16 +30,22 @@ class PluginManager(component.Component):
         self.plugins.append(plugin)
         logger.debug("Plugin registred: %s", plugin.name)
         
-    def getPluginByName(self, name):
+    def get_plugin_by_name(self, name):
         for plugin in self.plugins:
             if(plugin.name == name):
                 return plugin
             
         return None
             
-    def getPlugin(self, name):
-        return self.getPluginByName(name)
+    def get_plugin(self, name):
+        return self.get_plugin_by_name(name)
     
     def get(self, name):
-        return self.getPluginByName(name)
+        return self.get_plugin_by_name(name)
+    
+    def get_plugins(self):
+        return self.plugins
+    
+    def __iter__(self):
+        return self.plugins.__iter__()
         

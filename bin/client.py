@@ -1,50 +1,67 @@
 #!/usr/bin/env python
 
 import sys
+import time
+
 sys.path.append("../")
 
 from reactor.packet import Packet
-import time
+from reactor import logger
 
-from twisted.internet.protocol import DatagramProtocol
-from twisted.internet import reactor, task
+from threading import Thread
+from socket import socket, AF_INET, SOCK_DGRAM
 
-class WhistlerDatagramProtocol(DatagramProtocol):
- 
-    def startProtocol(self):
-        self.transport.connect('192.168.1.2', 4444)
+SERVER_IP = "192.168.1.2"
+SERVER_PORT = 4444
 
-    def datagramReceived(self, datagram, host):
-        #print 'Datagram received: ', repr(datagram)
-        
-        packet = Packet()
-        packet.unpack(datagram)
-        print "Packet received: " +  packet.to_string()
 
 def main():
-    protocol = WhistlerDatagramProtocol()
-    t = reactor.listenUDP(0, protocol)
     
-    tsk = task.LoopingCall(send_packet, protocol)
-    tsk.start(1)
+    # create udp socket
+    sock = socket(AF_INET,SOCK_DGRAM)
     
-    #reactor.callInThread(sendMessagesForever(protocol))
-    reactor.run()
     
-def send_packet(protocol):
-    packet = Packet()
-    packet.src = 25
-    packet.dst = 1
-    packet.cmd = 1
-    packet.add_variable("hellou", "world")
-    """
-    message.add_variable("int", 221)
-    message.add_variable("bool", False)
-    message.add_variable("float", 1.1)
-    message.add_variable("empty", None)
-    """
-    protocol.transport.write(packet.to_bytes())
-    print "Packet sent: " + packet.to_string()
+    
+    
+    
+    # send messages to server
+    for i in range(0, 3):
+        packet = Packet()
+        packet.src = 25
+        packet.dst = 1
+        packet.cmd = 1
+        packet.seq = i
+        packet.add_variable("hellou", "world")
+        packet.add_variable("counter", i)
+        """
+        packet.add_variable("int", 221)
+        packet.add_variable("bool", False)
+        packet.add_variable("float", 1.1)
+        packet.add_variable("empty", None)
+        """
+        sock.sendto(packet.to_bytes(), (SERVER_IP, SERVER_PORT))
+        print "Packet sent: " + packet.to_string()
+        
+        
+    # run receive in separate thread
+    receiver_thread = Thread(target=receiver, args=(sock,))
+    receiver_thread.start()
+    
+    # wait for responses
+    time.sleep(10)
+        
+    
+def receiver(sock):
+    #sock.bind(("0.0.0.0", SERVER_PORT))
+    while True:
+        # blocking read
+        datagram, address = sock.recvfrom(1024) # buffer size is 1024 bytes
+    
+        # parse message
+        packet = Packet()
+        packet.unpack(datagram)
+
+        logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
 
 if __name__ == '__main__':
     main()

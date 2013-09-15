@@ -21,6 +21,8 @@ class Packet(object):
         raise NotImplementedError( "Method not implemented" )
 """
 
+PACKET_HEADER_STRUCT = struct.Struct('<B H H H B H H')
+
 class Packet(object):
     
     def __init__(self, bytes = None):
@@ -42,13 +44,10 @@ class Packet(object):
         self.crc = 0         # 2 bytes
         
         # buffers
-        self.packet_header_struct = struct.Struct('<B H H H B H H')
-        self.packet_header = ctypes.create_string_buffer(self.packet_header_struct.size)
+        self.packet_header = ctypes.create_string_buffer(PACKET_HEADER_STRUCT.size)
         #self.packet_header = b""
         self._packet_data = b""
         self.packet = b""
-        
-        self.adapter = None;
         
     def add_variable(self, name, value = None):
         self.variables[name] = value
@@ -121,12 +120,12 @@ class Packet(object):
     def _pack_header(self):
         """ pack header variables to buffer """
         values = (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len)
-        self.packet_header_struct.pack_into(self.packet_header, 0, *values)
+        PACKET_HEADER_STRUCT.pack_into(self.packet_header, 0, *values)
         return self.packet_header.raw
     
     def _unpack_header(self):
         """ unpack header buffer to data """
-        (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len) = self.packet_header_struct.unpack_from(self.packet_header.raw, 0)
+        (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len) = PACKET_HEADER_STRUCT.unpack_from(self.packet_header.raw, 0)
         #log.msg( 'Packed   :', binascii.hexlify(self.packet_header.raw), "size: " , len(self.packet_header.raw) )
         #log.msg( 'Unpacked:', self.packet_header_struct.unpack_from(self.packet_header.raw, 0))
         
@@ -167,13 +166,18 @@ class Packet(object):
         return self.pack()
     
     def to_dict(self):
-        dict = self.__dict__.copy()
-        dict.pop("packet_header_struct")
-        dict.pop("packet_header")
-        dict.pop("packet")
-        dict.pop("_packet_data")
-        dict.pop("adapter")
-        return dict
+        d = self.__dict__.copy()
+        
+        if("packet_header" in d):
+            d.pop("packet_header")
+        
+        if("_packet_data" in d):
+            d.pop("_packet_data")
+            
+        if("packet" in d):
+            d.pop("packet")
+
+        return d
         
     def to_string(self):
         return str(self.to_dict())

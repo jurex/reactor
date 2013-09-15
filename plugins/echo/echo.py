@@ -1,7 +1,11 @@
 from reactor import component
+from reactor import utils
 from reactor.models.plugin import Plugin
 from reactor.messages import events
 from reactor.messages import commands
+from reactor.packet import Packet
+
+import os
 
 import logging
 logger = logging.getLogger("EchoPlugin")
@@ -12,20 +16,26 @@ class EchoPlugin(Plugin):
         Plugin.__init__(self, "EchoPlugin")
     
     def run(self):
-        # send ready
-        msg = events.PluginReady()
-        msg.src = self._name
-        msg.dst = "Core"
-            
-        # send request to core
-        self.zmq_socket.send(msg.to_json())
         
-        logger.info("Plugin started")
+        # connect
+        self.connect()
+        logger.info("Plugin started. PID: " + str(os.getpid()))
         
         while True:
-            msg = self.zmq_socket.recv();
-            logger.debug("Message Received: " + msg.uuid)
-    
+            msg = self.receive()
+            logger.debug("Message Received: " + msg.to_json())
+            
+            if(msg.__class__.__name__ == "PacketReceived"):
+                packet = Packet()
+                packet.__dict__ = msg.packet
+                packet.dst = packet.src
+                packet.src = 1
+                cmd = commands.PacketSend();
+                cmd.src = self.name
+                cmd.dst = "EthernetAdapter"
+                cmd.packet = packet.to_dict()
+                
+                self.send(cmd)            
     
     def receiver(self, source, message):
         

@@ -20,20 +20,20 @@ class Command(Message):
         return fields 
 
 
-class PacketSend(Message):
+class PacketSend(Command):
     pass
 
-class DeviceDiscover(Message):
+class DeviceDiscover(Command):
     pass
 
-class DeviceCreate(Message):
+class DeviceCreate(Command):
     pass
 
-class DeviceUpdate(Message):
+class DeviceUpdate(Command):
     pass
 
-class DeviceDelete(Message):
+class DeviceDelete(Command):
     pass
 
-class FirmwareUpdate(Message):
+class FirmwareUpdate(Command):
     pass

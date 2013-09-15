@@ -13,7 +13,8 @@ def decode_message(obj):
     
     # check attributes
     if('class' not in json_obj or 'type' not in json_obj or 'src' not in json_obj):
-        raise NameError('Missing fields!')
+        
+        raise NameError('Cannot decode message: ' + str(json_obj))
     
     class_ = globals()[json_obj['class']]
     

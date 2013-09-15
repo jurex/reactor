@@ -43,18 +43,22 @@ class Router(component.Component):
 
     def process(self, msg, src):
     
-        logger.debug("Routing message: " + msg.uuid)
+        # logger.debug("Routing message: " + msg.uuid)
         
         # get components
         core = component.get("Core")
         devices = component.get("DeviceManager")
 
         # TODO: packet routing
-      
-        # dispatch message to core
-        core.process(msg, src)
+        
+        if(msg.dst == "Core"):
+            # dispatch message to core
+            core.process(msg, src)
+        else:
+            self.send(msg, msg.dst)
         
     def send(self, msg, dst):
-        self.zmq_socket.send(dst, zmq.SNDMORE)
-        return self.zmq_socket.send(msg.to_json())
+        logger.debug("Sending message: " + msg.uuid + " to: " + dst)
+        self.zmq_socket.send_unicode(dst, zmq.SNDMORE)
+        return self.zmq_socket.send_unicode(msg.to_json())
         

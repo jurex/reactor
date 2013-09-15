@@ -1,5 +1,6 @@
 import logging
 import yaml
+import os
 
 from reactor import components
 from reactor.components.router import Router
@@ -53,7 +54,7 @@ class App(object):
         self.plugins.load("Echo")
         
         # init complete
-        logger.debug("App initialized")
+        logger.debug("App initialized. PID: " + str(os.getpid()))
         
         try:
             # start components
