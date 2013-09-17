@@ -3,9 +3,10 @@ import yaml
 import os
 
 from reactor import components
+from reactor.components.core import Core
 from reactor.components.router import Router
 from reactor.components.config import Config
-from reactor.components.core import Core
+from reactor.components.database import Database
 
 from reactor.managers.plugin import PluginManager
 from reactor.managers.device import DeviceManager
@@ -14,7 +15,7 @@ from reactor.managers.adapter import AdapterManager
 from reactor import logger
 
 # init config
-config = Config('./config/reactor.yaml')
+config = Config('../conf/reactor.yaml')
 
 # setup logger
 #loglevel = config.get("app", "loglevel")
@@ -41,6 +42,7 @@ class App(object):
         # init core parts 
         self.core = Core();
         self.router = Router()
+        self.database = Database()
         
         # init other managers
         self.adapters = AdapterManager()

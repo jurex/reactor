@@ -10,6 +10,7 @@ from reactor import utils
 from reactor.models.adapter import Adapter
 from reactor.messages import events
 from reactor.messages import commands
+from reactor.cache import Cache
 
 import logging
 import zmq
@@ -26,9 +27,8 @@ class EthernetAdapter(Adapter):
         
         config = component.get("Config")
         
-        self.addresses = {} # dstAddress => ipAddress
         self.name = "EthernetAdapter"
-        
+        self.cache = Cache(self.name)
         self.zmq_context = zmq.Context()
         self.zmq_addr = config.get('adapters.network.zmq_addr', 'tcp://127.0.0.1:6001')
         
@@ -71,6 +71,11 @@ class EthernetAdapter(Adapter):
             packet = Packet()
             packet.unpack(datagram)
             #message.adapter = self
+            
+            # update address cache
+            if(packet.src not in self.cache):
+                self.cache[packet.src] = str(address[0])+":"+str(address[1])
+                logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
             
             logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
             

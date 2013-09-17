@@ -1,10 +1,12 @@
 #!/usr/bin/python
+import sys
+sys.path.append("../")
 
 from reactor.app import App
 
 if __name__ == '__main__':
-    # init core
+    # init
     app = App()
     
-    # run core
+    # run
     app.run() 
