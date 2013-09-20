@@ -43,7 +43,7 @@ def main():
     #receiver_thread = Thread(target=receiver, args=(sock,))
     #receiver_thread.start()
     
-    logger.debug("Listening for packets...")
+    print("Listening for packets...")
     
     while True:
         # blocking read
@@ -53,7 +53,7 @@ def main():
         packet = Packet()
         packet.unpack(datagram)
 
-        logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
+        print("Packet received: " + packet.to_string() + " ip: " + str(address))
     
     # wait for responses
     #time.sleep(20)
@@ -61,7 +61,7 @@ def main():
     
 def receiver(sock):
     #sock.bind(("0.0.0.0", SERVER_PORT))
-    logger.debug("Listening for packets...")
+    print "Listening for packets..."
     
     while True:
         # blocking read
@@ -71,7 +71,7 @@ def receiver(sock):
         packet = Packet()
         packet.unpack(datagram)
 
-        logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
+        print("Packet received: " + packet.to_string() + " ip: " + str(address))
 
 if __name__ == '__main__':
     main()
