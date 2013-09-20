@@ -9,6 +9,8 @@ from pyasn1.type import univ
 from pyasn1.codec.ber import encoder, decoder
 from pyasn1.type import univ,namedtype,namedval,tag,constraint
 
+from reactor import logger
+
 """
 class Packet(object):
     
@@ -38,22 +40,21 @@ class Packet(object):
         self.len = 24        # 2 bytes       
 
         # packet data
-        self.variables =  {}
+        self.data =  {}
         
         # correction value      
         self.crc = 0         # 2 bytes
         
         # buffers
-        self.packet_header = ctypes.create_string_buffer(PACKET_HEADER_STRUCT.size)
-        #self.packet_header = b""
+        self._packet_header = ctypes.create_string_buffer(PACKET_HEADER_STRUCT.size)
         self._packet_data = b""
-        self.packet = b""
+        self._packet = b""
         
-    def add_variable(self, name, value = None):
-        self.variables[name] = value
+    def add_data(self, name, value = None):
+        self.data[name] = value
         
-    def get_variable(self, name):
-        return self.variables[name]
+    def get_data(self, name):
+        return self.data[name]
     
     def get_src(self):
         return self.dst
@@ -61,42 +62,45 @@ class Packet(object):
     def get_dst(self):
         return self.dst
     
-    def _pack_variables(self):
+    def _pack_data(self):
         """ pack variables to ASN1 BER encoded data """
         sequence = AsnVariableSequence()
         i = 0
         
-        for name in self.variables:
+        for name in self.data:
             
             var = AsnVariable()
             var.setComponentByName("name", univ.OctetString(name))
             
-            if (type(self.variables[name]) is int):       
-                var.setComponentByName("value", univ.Integer(self.variables[name]))
+            if (type(self.data[name]) is int):       
+                var.setComponentByName("value", univ.Integer(self.data[name]))
                 
-            if (type(self.variables[name]) is float):       
-                var.setComponentByName("value", univ.Real(self.variables[name]))
+            elif (type(self.data[name]) is float):       
+                var.setComponentByName("value", univ.Real(self.data[name]))
                 
-            if (type(self.variables[name]) is str):       
-                var.setComponentByName("value", univ.OctetString(self.variables[name]))
+            elif (type(self.data[name]) is str):       
+                var.setComponentByName("value", univ.OctetString(self.data[name]))
+            
+            elif (type(self.data[name]) is bool):       
+                var.setComponentByName("value", univ.Boolean(self.data[name]))
+               
+            elif (self.data[name] == None):       
+                var.setComponentByName("value", univ.Null(self.data[name]))
                 
-            if (type(self.variables[name]) is bool):       
-                var.setComponentByName("value", univ.Boolean(self.variables[name]))
-                
-            if (self.variables[name] == None):       
-                var.setComponentByName("value", univ.Null(self.variables[name]))
+            else:
+                var.setComponentByName("value", univ.OctetString(str(self.data[name])))
+                #raise NameError("unknown data type: " + str(name) + " : " + str(self.data[name]))   
                 
             sequence.setComponentByPosition(i, var)
             i += 1
 
         self._packet_data = encoder.encode(sequence)
-                
-        #log.msg("Variables packed: " + binascii.hexlify(self._packet_data))
+        #log.msg("Data packed: " + binascii.hexlify(self._packet_data))
         return self._packet_data
     
-    def _unpack_variables(self):
+    def _unpack_data(self):
         """ unpack ASN1 DER encoded variables from _packet_data """
-        self.variables.clear()
+        self.data.clear()
         sequence = decoder.decode(self._packet_data, asn1Spec=AsnVariableSequence())
 
         for i in range(len(sequence[0])):
@@ -115,29 +119,34 @@ class Packet(object):
                 value = bool(c_value)
             
             # add variable to variables
-            self.add_variable(name, value)
+            self.add_data(name, value)
     
     def _pack_header(self):
         """ pack header variables to buffer """
         values = (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len)
-        PACKET_HEADER_STRUCT.pack_into(self.packet_header, 0, *values)
-        return self.packet_header.raw
+        PACKET_HEADER_STRUCT.pack_into(self._packet_header, 0, *values)
+        return self._packet_header.raw
     
     def _unpack_header(self):
         """ unpack header buffer to data """
-        (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len) = PACKET_HEADER_STRUCT.unpack_from(self.packet_header.raw, 0)
+        (self.syn, self.flg, self.dst, self.src, self.cmd, self.seq, self.len) = PACKET_HEADER_STRUCT.unpack_from(self._packet_header.raw, 0)
         #log.msg( 'Packed   :', binascii.hexlify(self.packet_header.raw), "size: " , len(self.packet_header.raw) )
         #log.msg( 'Unpacked:', self.packet_header_struct.unpack_from(self.packet_header.raw, 0))
         
     def pack(self):
         """ pack message to internal buffer """
         
+        # init buffers
+        self._packet_header = ctypes.create_string_buffer(PACKET_HEADER_STRUCT.size)
+        self._packet_data = b""
+        self._packet = b""
+        
         # set random seq number
         if( self.seq == 0):
             self.seq = self.get_random_seq()
         
         # pack data variables
-        self._pack_variables()
+        self._pack_data()
         
         # get data length
         self.len = len(self._packet_data)
@@ -146,18 +155,24 @@ class Packet(object):
         self._pack_header()
         
         # combine packet = packet_header + packet_data
-        self.packet = self.packet_header.raw + self._packet_data
+        self._packet = self._packet_header.raw + self._packet_data
 
-        return self.packet
+        return self._packet
     
     def unpack(self, buffer):
         """ unpack message from buffer """
-        self.packet = buffer
-        self.packet_header.raw = buffer[0:11]
+        
+        # int buffers
+        self._packet_header = ctypes.create_string_buffer(PACKET_HEADER_STRUCT.size)
+        self._packet_data = b""
+        self._packet = b""
+        
+        self._packet = buffer
+        self._packet_header.raw = buffer[0:11]
         self._unpack_header()
         
         self._packet_data = buffer[12:len(buffer)]
-        self._unpack_variables()
+        self._unpack_data()
         
     def get_random_seq(self):
         return random.randint(1, 65000)      
@@ -168,14 +183,14 @@ class Packet(object):
     def to_dict(self):
         d = self.__dict__.copy()
         
-        if("packet_header" in d):
-            d.pop("packet_header")
+        if("_packet_header" in d):
+            d.pop("_packet_header")
         
         if("_packet_data" in d):
             d.pop("_packet_data")
             
-        if("packet" in d):
-            d.pop("packet")
+        if("_packet" in d):
+            d.pop("_packet")
 
         return d
         

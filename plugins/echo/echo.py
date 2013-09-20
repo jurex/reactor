@@ -26,30 +26,17 @@ class EchoPlugin(Plugin):
             logger.debug("Message Received: " + msg.to_json())
             
             if(msg.__class__.__name__ == "PacketReceived"):
+                # create packet
                 packet = Packet()
                 packet.__dict__ = msg.packet
                 packet.dst = packet.src
                 packet.src = 1
+                
+                # create command
                 cmd = commands.PacketSend();
                 cmd.src = self.name
                 cmd.dst = "EthernetAdapter"
                 cmd.packet = packet.to_dict()
                 
-                self.send(cmd)            
-    
-    def receiver(self, source, message):
-        
-        # reply message
-        src = message.src
-        dst = message.dst
-        
-        message.src = dst
-        message.dst = src
-        
-        devices = component.get("DeviceManager")
-        device = devices.getDeviceByAddress(message.dst)
-        
-        if (device != None):
-            device.send(message)
-        else:
-            logger.error("Device not found: %s ", src)
+                # send command
+                self.send(cmd)

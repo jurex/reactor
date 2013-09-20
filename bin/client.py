@@ -20,10 +20,6 @@ def main():
     # create udp socket
     sock = socket(AF_INET,SOCK_DGRAM)
     
-    
-    
-    
-    
     # send messages to server
     for i in range(0, 3):
         packet = Packet()
@@ -31,8 +27,8 @@ def main():
         packet.dst = 1
         packet.cmd = 1
         packet.seq = i
-        packet.add_variable("hellou", "world")
-        packet.add_variable("counter", i)
+        packet.add_data("hellou", "world")
+        packet.add_data("counter", i)
         """
         packet.add_variable("int", 221)
         packet.add_variable("bool", False)
@@ -48,11 +44,13 @@ def main():
     receiver_thread.start()
     
     # wait for responses
-    time.sleep(10)
+    time.sleep(20)
         
     
 def receiver(sock):
     #sock.bind(("0.0.0.0", SERVER_PORT))
+    logger.debug("Listening for packets...")
+    
     while True:
         # blocking read
         datagram, address = sock.recvfrom(1024) # buffer size is 1024 bytes

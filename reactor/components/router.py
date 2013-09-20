@@ -52,9 +52,10 @@ class Router(component.Component):
         # TODO: packet routing
         
         if(msg.dst == "Core"):
-            # dispatch message to core
+            # message to core
             core.process(msg, src)
         else:
+            # message to other
             self.send(msg, msg.dst)
         
     def send(self, msg, dst):

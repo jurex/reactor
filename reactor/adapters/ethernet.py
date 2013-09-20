@@ -103,7 +103,16 @@ class EthernetAdapter(Adapter):
                 packet = Packet()
                 packet.__dict__ = msg.packet
                 
-                logger.debug("Sending packet: " + packet.to_json())
+                addr = self.cache.get(packet.dst)
+                if(addr == None):
+                    logger.error("Address not found for device: " + packet.dst)
+                    continue
+                    
+                address = addr.split(":")
+                
+                # send packet
+                logger.debug("Sending packet: " + packet.to_json() + " to: " + addr)
+                socket.sendto(packet.to_bytes(), (address[0], int(address[1])))
                 continue
                 
             logger.error("No action for message found!")
@@ -119,22 +128,6 @@ class EthernetAdapter(Adapter):
         
     def stop(self):
         pass
-        
-    def write(self, message):
-        address = self.addresses.get(message.dst)
-        if (address == None) : 
-            logger.error("unknown dst IP address for device " + str(message.dst))
-            raise Exception("unknown dst IP address for device " + str(message.dst))
-        
-        self.server.sendto(message.pack(), address)
-        logger.debug("message sent: " + message.to_string() + " ip: " + str(address))
-        self.messagesOut += 1
-        
-    def addAddress(self, src, address):
-        addr = self.addresses.get(src)
-        if (addr == None or addr != address):
-            self.addresses[src] = address
-            logger.debug('ip address registred: ' + str(src) + " = " + str(address))
             
     def to_dict(self):
         d = self.__dict__.copy()

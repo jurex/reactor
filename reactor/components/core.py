@@ -47,7 +47,7 @@ class Core(component.Component):
             msg = events.DeviceUpdated()
             msg.src = "Core"
             msg.device = packet.src
-            msg.variables = packet.variables
+            msg.data = packet.data
             
             # dispatch device updated event
             self.dispatch_event(msg)        
