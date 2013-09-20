@@ -40,11 +40,23 @@ def main():
         
         
     # run receive in separate thread
-    receiver_thread = Thread(target=receiver, args=(sock,))
-    receiver_thread.start()
+    #receiver_thread = Thread(target=receiver, args=(sock,))
+    #receiver_thread.start()
+    
+    logger.debug("Listening for packets...")
+    
+    while True:
+        # blocking read
+        datagram, address = sock.recvfrom(1024) # buffer size is 1024 bytes
+    
+        # parse message
+        packet = Packet()
+        packet.unpack(datagram)
+
+        logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
     
     # wait for responses
-    time.sleep(20)
+    #time.sleep(20)
         
     
 def receiver(sock):
