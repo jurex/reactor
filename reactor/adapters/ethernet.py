@@ -121,9 +121,11 @@ class EthernetAdapter(Adapter):
     def start(self):
         # start adapter threads
         self.receiver_thread = Thread(target=self.receiver, args=(self.socket,self.zmq_socket,))
+        self.receiver_thread.daemon = True
         self.receiver_thread.start()
         
         self.sender_thread = Thread(target=self.sender, args=(self.socket,self.zmq_socket,))
+        self.sender_thread.daemon = True
         self.sender_thread.start()
         
     def stop(self):
