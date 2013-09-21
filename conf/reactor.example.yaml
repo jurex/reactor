@@ -10,7 +10,7 @@ database:
 
 core:
   addr: 1
-  zmq_addr: tcp://127.0.0.1:6000
+  zmq_addr: tcp://127.0.0.1:55555
  
 adapters:
   ethernet:
