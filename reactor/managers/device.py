@@ -12,14 +12,10 @@ class DeviceManager(component.Component):
         # component constructor
         component.Component.__init__(self, "DeviceManager")
         
-    def register(self, address, adapter, server):
-        if (self.getDeviceByAddress(address) == None):
-            device = Device()
-            device.address = address
-            device.adapter = adapter
-            device.server = server
+    def register(self, device):
+        if (self.get_device_by_address(device.address) == None and self.get_device_by_id(device.id) == None):
             self.devices.append(device)
-            logger.debug("Device \""+str(address)+"\" registred")
+            logger.debug("Device registred: " + str(device))
     
     def get_device_by_address(self,  address):
         for device in self.devices:
@@ -33,6 +29,6 @@ class DeviceManager(component.Component):
             
     def get_device(self, id_or_address):
         if (isinstance(id_or_address, (int))):
-            return self.getDeviceById(id_or_address)
+            return self.get_device_by_id(id_or_address)
         else:
-            return self.getDeviceByAddress(id_or_address)
+            return self.get_device_by_address(id_or_address)

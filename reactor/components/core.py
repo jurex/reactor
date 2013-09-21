@@ -3,6 +3,7 @@ from reactor.managers.device import DeviceManager
 from reactor.messages import events
 from reactor.messages import commands
 from reactor.packet import Packet
+from reactor.models.device import Device
 
 import logging
 logger = logging.getLogger("Core")
@@ -34,6 +35,7 @@ class Core(component.Component):
         if(event.__class__.__name__ == "PluginReady"):
             plugin = plugins.get(event.src)
             plugin.ready = True;
+            return
         
         # packet received 
         if(event.__class__.__name__ == "PacketReceived"):
@@ -41,16 +43,34 @@ class Core(component.Component):
             packet = Packet()
             packet.__dict__ = event.packet
             
+            # check device
+            device = devices.get_device(packet.src)
+            if(device == None):
+                # create device
+                device = Device()
+                device.id = int(packet.src)
+                device.address = packet.src
+                device.adapter = event.src
+                
+                # register device
+                devices.register(device)
+                
             # dispatch packet event
             self.dispatch_event(event)
-            
+         
             msg = events.DeviceUpdated()
             msg.src = "Core"
             msg.device = packet.src
             msg.data = packet.data
             
             # dispatch device updated event
-            self.dispatch_event(msg)        
+            self.dispatch_event(msg)
+            return
+        
+        else:
+            logger.error("Unknown event type: " + event.uuid)
+            return
+        
         
         
     def dispatch_event(self, msg):
@@ -64,29 +84,42 @@ class Core(component.Component):
             if(msg.src != msg.dst and plugin.ready == True):
                 router.send(msg, msg.dst)
     
-    def process_command(self, msg):
-        logger.debug("Processing command: " + msg.uuid)
-    
-    
-    def onMessageReceived(self, message):
+    def process_command(self, cmd):
+        logger.debug("Processing command: " + cmd.uuid)
         
-        # get source device
+        router = component.get("Router")
+        plugins = component.get("PluginManager")
+        devices = component.get("DeviceManager")
+        
+        # update device
+        if(cmd.__class__.__name__ == "DeviceUpdate"):
+            # get device from manager
+            device = devices.get_device_by_id(cmd.device["id"])
+            if(device == None):
+                logger.error("Device not found: " + str(cmd.device["id"]))
+                return
                 
-        dm = component.get("DeviceManager")
-        device = dm.getDeviceByAddress(message.src)
+            # send packet to device
+            packet = Packet()
+            packet.src = 1
+            packet.dst = device.id
+            packet.cmd = 2
+            packet.data = cmd.device["data"]
+            
+            msg = commands.PacketSend()
+            msg.src = "Core"
+            msg.dst = device.adapter
+            msg.packet = packet.to_dict()
+            
+            logger.debug("Sending update request to device: " + msg.to_json())
+            router.send(msg)
+            return
         
-        if (device == None):
-            logger.debug("device not found: %s", message.src)
-            
-            # create new device
-            # TODO: craete only device if association completed
-            
-            dm.register(message.src, message.adapter, None)
-            
+        else:
+            logger.error("Unknown command type: " + cmd.uuid)
+        
+    
 
-        # fire events
-        em = component.get("EventManager")
-        # em.fireEvent(MessageReceivedEvent(self, message))
     
     
         

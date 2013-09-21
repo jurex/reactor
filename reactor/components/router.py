@@ -58,7 +58,10 @@ class Router(component.Component):
             # message to other
             self.send(msg, msg.dst)
         
-    def send(self, msg, dst):
+    def send(self, msg, dst = None):
+        if(dst == None):
+            dst = msg.dst
+            
         logger.debug("Sending message: " + msg.uuid + " to: " + dst)
         self.zmq_socket.send_unicode(dst, zmq.SNDMORE)
         return self.zmq_socket.send_unicode(msg.to_json())

@@ -33,10 +33,19 @@ class EchoPlugin(Plugin):
                 packet.src = 1
                 
                 # create command
-                cmd = commands.PacketSend();
+                cmd = commands.PacketSend()
                 cmd.src = self.name
                 cmd.dst = "EthernetAdapter"
                 cmd.packet = packet.to_dict()
+                
+                # send command
+                self.send(cmd)
+                
+                # create command
+                cmd = commands.DeviceUpdate()
+                cmd.src = self.name
+                cmd.dst = "Core"
+                cmd.device = {'id': 25, 'data': {'io.output.1': 25}}
                 
                 # send command
                 self.send(cmd)

@@ -30,7 +30,7 @@ class DeviceCreate(Command):
     pass
 
 class DeviceUpdate(Command):
-    pass
+    device = {}
 
 class DeviceDelete(Command):
     pass
