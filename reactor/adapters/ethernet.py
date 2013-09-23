@@ -10,6 +10,7 @@ from reactor.models.adapter import Adapter
 from reactor.messages import events
 from reactor.messages import commands
 from reactor.cache import Cache
+from reactor.components.database import Database
 
 import logging
 import time
@@ -31,7 +32,7 @@ logger = logging.getLogger("EthernetAdapter")
 class EthernetAdapter(Adapter):
     
     def __init__(self):
-        Thread.__init__(self)
+        Adapter.__init__(self)
         self.name = "EthernetAdapter"
         
     def receiver(self, socket, zmq_socket):
@@ -104,10 +105,13 @@ class EthernetAdapter(Adapter):
                 
             logger.error("No action for message found!")
             
-        
     def run(self):
         
         config = component.get("Config")
+        # uncomment this if adapter is running in separate process
+        #self.db = Database()
+        
+        # init cache // maybe better cache ?
         self.cache = Cache(self.name)
         #self.cache = {}
         
