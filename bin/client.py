@@ -38,6 +38,8 @@ def main():
         sock.sendto(packet.to_bytes(), (SERVER_IP, SERVER_PORT))
         print "Packet sent: " + packet.to_string()
         
+        time.sleep(0.001)
+        
         
     # run receive in separate thread
     #receiver_thread = Thread(target=receiver, args=(sock,))

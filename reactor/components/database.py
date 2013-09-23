@@ -11,6 +11,6 @@ class Database(component.Component):
         config = component.get("Config")
         engine = config.get('database.engine')
         
-        self.engine = create_engine(engine, echo=True)
+        self.engine = create_engine(engine, echo=False)
         #self.connection = self.engine.connect()
         

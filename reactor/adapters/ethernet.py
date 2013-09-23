@@ -3,7 +3,6 @@ Created on 19.5.2013
 
 @author: Jurex
 '''
-# packet definition
 from reactor import component
 from reactor.packet import Packet
 from reactor import utils
@@ -13,39 +12,30 @@ from reactor.messages import commands
 from reactor.cache import Cache
 
 import logging
-import zmq
 import time
 
+#import zmq
+import zmq.green as zmq
+
+import gevent
+import gevent.monkey
+
+gevent.monkey.patch_socket()
+
 from threading import Thread
-from socket import socket, AF_INET, SOCK_DGRAM
+from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_RCVBUF
 
 logger = logging.getLogger("EthernetAdapter")
+
 
 class EthernetAdapter(Adapter):
     
     def __init__(self):
-        
-        config = component.get("Config")
-        
+        Thread.__init__(self)
         self.name = "EthernetAdapter"
-        self.cache = Cache(self.name)
-        self.zmq_context = zmq.Context()
-        self.zmq_addr = config.get('adapters.network.zmq_addr', 'tcp://127.0.0.1:6001')
-        
-        # create udp socket
-        self.socket = socket(AF_INET,SOCK_DGRAM)
-        
-        # create zmq socket
-        zmq_core_addr = config.get('core.zmq_addr')
-        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
-        self.zmq_socket.setsockopt(zmq.IDENTITY, self.name)
-        self.zmq_socket.connect(zmq_core_addr)
-        
-        logger.debug('Adapter initlialized')
         
     def receiver(self, socket, zmq_socket):
-        
-        #time.sleep(2)
+
         config = component.get("Config")
         
         # bind udp listener
@@ -70,14 +60,16 @@ class EthernetAdapter(Adapter):
             # parse message
             packet = Packet()
             packet.unpack(datagram)
-            #message.adapter = self
             
+            logger.debug("Packet received: " + packet.to_string() + " from ip: " + str(address))
+             
             # update address cache
             if(packet.src not in self.cache):
                 self.cache[packet.src] = str(address[0])+":"+str(address[1])
                 logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
-            
-            logger.debug("Packet received: " + packet.to_string() + " ip: " + str(address))
+            elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
+                self.cache[packet.src] = str(address[0])+":"+str(address[1])
+                
             
             # create message
             msg = events.PacketReceived()
@@ -86,11 +78,6 @@ class EthernetAdapter(Adapter):
             
             # send request to core
             zmq_socket.send(msg.to_json())
-            
-            # wait for core response
-            # zmq_socket.recv()
-            
-            #logger.debug("Datagram processing finished")
             
     def sender(self, socket, zmq_socket):
         logger.debug('Waiting for messages to send')
@@ -111,32 +98,38 @@ class EthernetAdapter(Adapter):
                 address = addr.split(":")
                 
                 # send packet
-                logger.debug("Sending packet: " + packet.to_json() + " to: " + addr)
                 socket.sendto(packet.to_bytes(), (address[0], int(address[1])))
+                logger.debug("Packet sent: " + packet.to_json() + " to: " + addr)
                 continue
                 
             logger.error("No action for message found!")
             
         
-    def start(self):
-        # start adapter threads
-        self.receiver_thread = Thread(target=self.receiver, args=(self.socket,self.zmq_socket,))
-        self.receiver_thread.daemon = True
-        self.receiver_thread.start()
+    def run(self):
         
-        self.sender_thread = Thread(target=self.sender, args=(self.socket,self.zmq_socket,))
-        self.sender_thread.daemon = True
-        self.sender_thread.start()
+        config = component.get("Config")
+        self.cache = Cache(self.name)
+        #self.cache = {}
         
-    def stop(self):
-        pass
-            
-    def to_dict(self):
-        d = self.__dict__.copy()
-        if( d.has_key("protocol")):
-            d.pop("protocol") 
-        return d
-
+        self.zmq_context = zmq.Context()
+        
+        # create udp socket
+        self.socket = socket(AF_INET,SOCK_DGRAM)
+        
+        # create zmq socket
+        zmq_core_addr = config.get('core.zmq_addr')
+        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
+        self.zmq_socket.setsockopt(zmq.IDENTITY, self.name)
+        self.zmq_socket.connect(zmq_core_addr)
+        
+        logger.debug('Adapter initlialized')
+        
+        # spawn green threads
+        g1 = gevent.spawn(self.receiver, self.socket, self.zmq_socket)
+        g2 = gevent.spawn(self.sender, self.socket, self.zmq_socket)
+        
+        # join threads
+        gevent.joinall([g1,g2])
         
     
 

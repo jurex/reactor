@@ -26,10 +26,14 @@ class Core(component.Component):
         raise NameError("Unknown message type")
     
     def process_event(self, event):
-        logger.debug("Processing event: " + event.uuid)
+        #logger.debug("Processing event: " + event.uuid)
         
         plugins = component.get("PluginManager")
         devices = component.get("DeviceManager")
+        
+        # set adapter as ready
+        if(event.__class__.__name__ == "AdapterReady"):
+            return
         
         # set plugin as ready
         if(event.__class__.__name__ == "PluginReady"):
@@ -85,7 +89,7 @@ class Core(component.Component):
                 router.send(msg, msg.dst)
     
     def process_command(self, cmd):
-        logger.debug("Processing command: " + cmd.uuid)
+        #logger.debug("Processing command: " + cmd.uuid)
         
         router = component.get("Router")
         plugins = component.get("PluginManager")
@@ -111,7 +115,7 @@ class Core(component.Component):
             msg.dst = device.adapter
             msg.packet = packet.to_dict()
             
-            logger.debug("Sending update request to device: " + msg.to_json())
+            #logger.debug("Sending update request to device: " + msg.uuid)
             router.send(msg)
             return
         

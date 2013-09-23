@@ -24,8 +24,6 @@ class Router(component.Component):
         self.zmq_socket = self.zmq_context.socket(zmq.ROUTER)
         self.zmq_socket.bind(zmq_addr)
         
-        #print "router thread: " + str(thread.get_ident())
-        
         logger.info("Starting processing messages")
         
         # infinite loop
@@ -36,15 +34,12 @@ class Router(component.Component):
             msg_json = self.zmq_socket.recv()
             msg = utils.decode_message(msg_json)
     
-            logger.debug("Message received (" + src + "): " + str(msg.to_json()))
+            logger.debug("Message received (" + src + "): " + msg.to_json())
         
             # process message
             self.process(msg, src)
 
-    def process(self, msg, src):
-    
-        # logger.debug("Routing message: " + msg.uuid)
-        
+    def process(self, msg, src):        
         # get components
         core = component.get("Core")
         devices = component.get("DeviceManager")
@@ -62,7 +57,7 @@ class Router(component.Component):
         if(dst == None):
             dst = msg.dst
             
-        logger.debug("Sending message: " + msg.uuid + " to: " + dst)
+        #logger.debug("Sending message: " + msg.uuid + " to: " + dst)
         self.zmq_socket.send_unicode(dst, zmq.SNDMORE)
         return self.zmq_socket.send_unicode(msg.to_json())
         
