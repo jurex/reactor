@@ -11,7 +11,7 @@ from reactor import logger
 from threading import Thread
 from socket import socket, AF_INET, SOCK_DGRAM
 
-SERVER_IP = "192.168.1.2"
+SERVER_IP = "localhost"
 SERVER_PORT = 4444
 
 
