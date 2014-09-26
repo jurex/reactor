@@ -2,3 +2,5 @@
 /dist
 /db
 /build
+/conf/reactor.yaml
+*.pyc
