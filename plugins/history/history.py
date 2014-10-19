@@ -10,16 +10,16 @@ class HistoryPlugin(Plugin):
     
     def __init__(self):
         self.history = []
-        Plugin.__init__(self, "HistoryPlugin")
+        Plugin.__init__(self, "@history")
         
     def run(self):
         
-        # connect
-        self.connect()
+        # initialize
+        self.init()
+
         logger.info("Plugin started. PID: " + str(os.getpid()))
         
         while True:
-            msg = self.receive()
-            
-            #logger.debug("Message Received: " + msg.to_json())
+            event = self.eb_receive()
+            logger.debug("Event Received: " + event.to_json())
     

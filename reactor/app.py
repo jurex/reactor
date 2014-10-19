@@ -15,7 +15,7 @@ from reactor.managers.adapter import AdapterManager
 from reactor import logger
 
 # init config
-config = Config('../conf/reactor.yaml')
+config = Config('../conf/reactor.yml')
 
 # setup logger
 #loglevel = config.get("app", "loglevel")
@@ -35,7 +35,7 @@ logging.basicConfig(
 class App(object):
         
     def run(self):
-        self.version = '0.1.0'
+        self.version = '0.2.0'
 
         logger.info("Version: " + self.version)
         

@@ -23,8 +23,8 @@ class AdapterManager(component.Component):
         
     def register(self, adapter):
         self.adapters.append(adapter)
-        logger.debug(adapter.name + " registred")
-        
+        logger.debug("Adapter registred: " + adapter.name)
+
     def unregister(self, adapter):
         pass
         
@@ -33,15 +33,17 @@ class AdapterManager(component.Component):
             adapter.daemon = True;
             adapter.start()
             
-    def getAdapterByName(self, name):
+    def get_adapter_by_name(self, name):
         for adapter in self.adapters:
             if(adapter.name == name):
                 return adapter
             
         return None
             
-    
     def get(self, name):
-        return self.getAdapterByName(name)
+        return self.get_adapter_by_name(name)
+
+    def __iter__(self):
+        return self.adapters.__iter__()
 
         

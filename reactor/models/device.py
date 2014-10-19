@@ -20,6 +20,7 @@ class Device(Base):
     
     def to_dict(self):
         d = self.__dict__.copy()
+        del d['_sa_instance_state']
         return d
     
     def to_string(self):

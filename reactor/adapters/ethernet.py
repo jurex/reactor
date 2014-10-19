@@ -7,8 +7,7 @@ from reactor import component
 from reactor.packet import Packet
 from reactor import utils
 from reactor.models.adapter import Adapter
-from reactor.messages import events
-from reactor.messages import commands
+from reactor.event import Event
 from reactor.cache import Cache
 from reactor.components.database import Database
 
@@ -33,7 +32,8 @@ class EthernetAdapter(Adapter):
     
     def __init__(self):
         Adapter.__init__(self)
-        self.name = "EthernetAdapter"
+        self.name = "#ethernet"
+        self.ready = False;
         
     def receiver(self, socket, zmq_socket):
 
@@ -47,12 +47,11 @@ class EthernetAdapter(Adapter):
         logger.debug('Binded on port: ' + str(port))
         
         # send ready
-        msg = events.AdapterReady()
-        msg.src = self.name
-        msg.dst = "Core"
+        event = Event("adapter.ready")
+        event.src = self.name
             
         # send request to core
-        zmq_socket.send(msg.to_json())
+        zmq_socket.send(event.to_json())
         
         while True:
             # blocking read
@@ -70,30 +69,39 @@ class EthernetAdapter(Adapter):
                 logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
             elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
                 self.cache[packet.src] = str(address[0])+":"+str(address[1])
+
+
                 
             
             # create message
-            msg = events.PacketReceived()
-            msg.src = self.name
-            msg.packet = packet.to_dict();
-            
+            event = Event("device.update")
+            event.src = self.name
+            event.data = packet.to_dict()
+
             # send request to core
-            zmq_socket.send(msg.to_json())
+            zmq_socket.send(event.to_json())
             
     def sender(self, socket, zmq_socket):
-        logger.debug('Waiting for messages to send')
+        logger.debug('Waiting for events')
         
         while True:
-            msg_json = zmq_socket.recv()
-            msg = utils.decode_message(msg_json)
-            
-            if(msg.__class__.__name__ == "PacketSend"):
+            obj = zmq_socket.recv()
+            event = Event()
+            event.from_json(obj)
+
+            logger.debug("Event received: " + event.to_json())
+
+            if(event.name == "device.push"):
                 packet = Packet()
-                packet.__dict__ = msg.packet
+                packet.__dict__ = event.data
+                packet.dst = packet.src
+                packet.src = 1
+
+                logger.debug("packet to send: " + packet.to_json())
                 
                 addr = self.cache.get(packet.dst)
                 if(addr == None):
-                    logger.error("Address not found for device: " + packet.dst)
+                    logger.error("Address not found for device: " + str(packet.dst))
                     continue
                     
                 address = addr.split(":")
@@ -102,8 +110,6 @@ class EthernetAdapter(Adapter):
                 socket.sendto(packet.to_bytes(), (address[0], int(address[1])))
                 logger.debug("Packet sent: " + packet.to_json() + " to: " + addr)
                 continue
-                
-            logger.error("No action for message found!")
             
     def run(self):
         

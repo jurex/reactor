@@ -1,9 +1,7 @@
 from reactor import component
 from reactor import utils
 from reactor.models.plugin import Plugin
-from reactor.messages import events
-from reactor.messages import commands
-from reactor.packet import Packet
+from reactor.event import Event
 
 import os
 
@@ -13,43 +11,27 @@ logger = logging.getLogger("EchoPlugin")
 class EchoPlugin(Plugin):
     
     def __init__(self):
-        Plugin.__init__(self, "EchoPlugin")
+        Plugin.__init__(self, "@echo")
     
     def run(self):
         
         # connect
-        self.connect()
+        self.init()
         logger.info("Plugin started. PID: " + str(os.getpid()))
         counter = 0;
         
         while True:
-            # blocking call to receive smg
-            msg = self.receive()
-            #logger.debug("Message Received: " + msg.uuid)
+            # blocking call to receive event
+            event = self.eb_receive()
+            logger.debug("Event Received: " + event.uuid)
             
-            if(msg.__class__.__name__ == "PacketReceived"):
+            if(event.name  == "device.update"):
                 counter = counter + 1
                 
-                # create packet
-                packet = Packet()
-                packet.__dict__ = msg.packet
-                packet.dst = packet.src
-                packet.src = 1
-                
                 # create command
-                cmd = commands.PacketSend()
-                cmd.src = self.name
-                cmd.dst = "EthernetAdapter"
-                cmd.packet = packet.to_dict()
-                
+                e = Event("device.push")
+                e.data = event.data
+
                 # send command
-                self.send(cmd)
+                self.eb_dispatch(e)
                 
-                # create command
-                cmd = commands.DeviceUpdate()
-                cmd.src = self.name
-                cmd.dst = "Core"
-                cmd.device = {'id': 25, 'data': {'io.output.1': counter, 'counter': packet.data['counter']}}
-                
-                # send command
-                self.send(cmd)
