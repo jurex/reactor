@@ -21,26 +21,26 @@ class Plugin(Thread):
         
     def init(self):
         # connect to event bus
-        self.eb_connect()
+        self.connect()
 
         # notify core
         event = Event("plugin.ready")        
         
         # dispatch event to core
-        self.eb_dispatch(event)
+        self.dispatch(event)
 
     # EVENT BUS subsystem
 
-    def eb_connect(self):
+    def connect(self):
         return self.zmq_connect()
 
-    def eb_disconnect(self):
+    def disconnect(self):
         return self.zmq_disconnect()
         
-    def eb_receive(self):
+    def receive(self):
         return self.zmq_receive()
 
-    def eb_dispatch(self, event):
+    def dispatch(self, event):
         return self.zmq_dispatch(event)
 
     # ZMQ subsystem

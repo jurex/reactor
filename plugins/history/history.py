@@ -2,8 +2,8 @@ from reactor import  component
 from reactor.models.plugin import Plugin
 from reactor import utils
 import os
-
 import logging
+
 logger = logging.getLogger("HistoryPlugin")
 
 class HistoryPlugin(Plugin):
@@ -20,6 +20,6 @@ class HistoryPlugin(Plugin):
         logger.info("Plugin started. PID: " + str(os.getpid()))
         
         while True:
-            event = self.eb_receive()
+            event = self.receive()
             logger.debug("Event Received: " + event.to_json())
     

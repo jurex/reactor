@@ -4,7 +4,6 @@ import os
 
 from reactor import components
 from reactor.components.core import Core
-from reactor.components.router import Router
 from reactor.components.config import Config
 from reactor.components.database import Database
 
@@ -41,7 +40,6 @@ class App(object):
         
         # init core parts 
         self.core = Core();
-        self.router = Router()
         self.database = Database()
         
         # init other managers
@@ -64,7 +62,7 @@ class App(object):
             logger.info("All compnents started") 
             
             # start router / blocking call
-            self.router.run()
+            self.core.run()
             
         finally:
             self.shutdown()

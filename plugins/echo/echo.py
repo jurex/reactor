@@ -22,7 +22,7 @@ class EchoPlugin(Plugin):
         
         while True:
             # blocking call to receive event
-            event = self.eb_receive()
+            event = self.receive()
             logger.debug("Event Received: " + event.uuid)
             
             if(event.name  == "device.update"):
@@ -33,5 +33,5 @@ class EchoPlugin(Plugin):
                 e.data = event.data
 
                 # send command
-                self.eb_dispatch(e)
+                self.dispatch(e)
                 

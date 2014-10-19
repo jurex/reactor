@@ -2,6 +2,7 @@ from reactor import component
 from reactor.managers.device import DeviceManager
 from reactor.event import Event
 from reactor.packet import Packet
+from reactor.eventbus import ZMQEventBus
 from reactor.models.device import Device
 
 import logging
@@ -13,8 +14,21 @@ class Core(component.Component):
         
         self.id = 1
         self.address = 1
+        self.eventbus = ZMQEventBus()
+
+    def run(self):
+
+        while 1:
+            # listen for events
+            event = self.eventbus.receive()
+
+            # process events
+            self.process(event)
+
+            # dispatch events
+            self.eventbus.dispatch(event)
     
-    def process(self, event, src):
+    def process(self, event):
         #logger.debug("Processing event: " + event.uuid)
         
         adapters = component.get("AdapterManager")
