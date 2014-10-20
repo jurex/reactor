@@ -31,11 +31,9 @@ logger = logging.getLogger("EthernetAdapter")
 class EthernetAdapter(Adapter):
     
     def __init__(self):
-        Adapter.__init__(self)
-        self.name = "#ethernet"
-        self.ready = False;
+        Adapter.__init__(self, "#ethernet")
         
-    def receiver(self, socket, zmq_socket):
+    def receiver(self, socket):
 
         config = component.get("Config")
         
@@ -45,13 +43,6 @@ class EthernetAdapter(Adapter):
         socket.bind((interface, port))
         
         logger.debug('Binded on port: ' + str(port))
-        
-        # send ready
-        event = Event("adapter.ready")
-        event.src = self.name
-            
-        # send request to core
-        zmq_socket.send(event.to_json())
         
         while True:
             # blocking read
@@ -71,24 +62,19 @@ class EthernetAdapter(Adapter):
                 self.cache[packet.src] = str(address[0])+":"+str(address[1])
 
 
-                
-            
             # create message
             event = Event("device.update")
             event.src = self.name
             event.data = packet.to_dict()
 
-            # send request to core
-            zmq_socket.send(event.to_json())
+            # send event to core
+            self.eventbus.dispatch(event)
             
-    def sender(self, socket, zmq_socket):
+    def sender(self, socket):
         logger.debug('Waiting for events')
         
         while True:
-            obj = zmq_socket.recv()
-            event = Event()
-            event.from_json(obj)
-
+            event = self.eventbus.receive()
             logger.debug("Event received: " + event.to_json())
 
             if(event.name == "device.push"):
@@ -121,26 +107,15 @@ class EthernetAdapter(Adapter):
         self.cache = Cache(self.name)
         #self.cache = {}
         
-        self.zmq_context = zmq.Context()
-        
         # create udp socket
         self.socket = socket(AF_INET,SOCK_DGRAM)
         
-        # create zmq socket
-        zmq_core_addr = config.get('core.zmq_addr')
-        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
-        self.zmq_socket.setsockopt(zmq.IDENTITY, self.name)
-        self.zmq_socket.connect(zmq_core_addr)
-        
+        self.init()
         logger.debug('Adapter initlialized')
         
         # spawn green threads
-        g1 = gevent.spawn(self.receiver, self.socket, self.zmq_socket)
-        g2 = gevent.spawn(self.sender, self.socket, self.zmq_socket)
+        g1 = gevent.spawn(self.receiver, self.socket)
+        g2 = gevent.spawn(self.sender, self.socket)
         
         # join threads
-        gevent.joinall([g1,g2])
-        
-    
-
-        
+        gevent.joinall([g1,g2])       

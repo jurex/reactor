@@ -1,9 +1,14 @@
 from reactor import component
 from reactor import utils
 from reactor.event import Event
-import zmq
+import zmq.green as zmq
 import json
 import logging
+
+import gevent
+import gevent.monkey
+
+gevent.monkey.patch_socket()
 
 logger = logging.getLogger("EventBus")
 
@@ -22,10 +27,6 @@ class EventBus(object):
 class ZMQEventBus(EventBus):
 
     def __init__(self, name="unknown"):
-
-        # init logger
-        logger = logging.getLogger(name)
-
         # parent init
         EventBus.__init__(self, name)
 
@@ -62,9 +63,6 @@ class ZMQEventBus(EventBus):
 class ZMQCEventBus(EventBus):
 
     def __init__(self, name="unknown"):
-        # init logger
-        logger = logging.getLogger(name)
-
         # parent init
         EventBus.__init__(self, name)
         

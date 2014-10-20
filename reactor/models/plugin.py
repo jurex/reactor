@@ -19,15 +19,12 @@ class Plugin(Thread):
         self.name = name
         self.ready = False;
         
-
     def init(self):
         # init eventbus
         self.eventbus = ZMQCEventBus(self.name)
 
         # notify core
         event = Event("plugin.ready")        
-        
-        # dispatch event to core
         self.eventbus.dispatch(event)
    
     def shutdown(self):
