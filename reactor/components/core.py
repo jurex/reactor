@@ -14,13 +14,14 @@ class Core(component.Component):
         
         self.id = 1
         self.address = 1
-        self.eventbus = ZMQEventBus()
+        self.eventbus = ZMQEventBus("@core")
 
     def run(self):
 
         while 1:
             # listen for events
             event = self.eventbus.receive()
+            logger.debug("Event received: " + event.to_json())
 
             # process events
             self.process(event)

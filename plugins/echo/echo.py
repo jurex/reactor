@@ -22,8 +22,8 @@ class EchoPlugin(Plugin):
         
         while True:
             # blocking call to receive event
-            event = self.receive()
-            logger.debug("Event Received: " + event.uuid)
+            event = self.eventbus.receive()
+            logger.debug("Event received: " + event.to_json())
             
             if(event.name  == "device.update"):
                 counter = counter + 1
@@ -33,5 +33,5 @@ class EchoPlugin(Plugin):
                 e.data = event.data
 
                 # send command
-                self.dispatch(e)
+                self.eventbus.dispatch(e)
                 

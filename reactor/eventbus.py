@@ -5,15 +5,13 @@ import zmq
 import json
 import logging
 
-
-logger = logging.getLogger("Core")
+logger = logging.getLogger("EventBus")
 
 class EventBus(object):
 
     def __init__(self, name="unknown"):
         self.name = name
         self.config = component.get("Config")
-        logger.info("EventBus initialized")
 
     def receive(self):
         pass
@@ -24,6 +22,10 @@ class EventBus(object):
 class ZMQEventBus(EventBus):
 
     def __init__(self, name="unknown"):
+
+        # init logger
+        logger = logging.getLogger(name)
+
         # parent init
         EventBus.__init__(self, name)
 
@@ -39,8 +41,6 @@ class ZMQEventBus(EventBus):
         obj = self.zmq_socket.recv()
         event = Event()
         event.from_json(obj)
-
-        logger.debug("Event received from: " + src + ", " + event.to_json())
         return event;
 
     def dispatch(self, event):
@@ -58,3 +58,31 @@ class ZMQEventBus(EventBus):
             if(adapter.name != event.src and adapter.ready == True):
                 self.zmq_socket.send_unicode(adapter.name, zmq.SNDMORE)
                 self.zmq_socket.send_unicode(event.to_json())
+
+class ZMQCEventBus(EventBus):
+
+    def __init__(self, name="unknown"):
+        # init logger
+        logger = logging.getLogger(name)
+
+        # parent init
+        EventBus.__init__(self, name)
+        
+        # create zmq socket
+        config = component.get("Config")
+        zmq_core_addr = config.get('core.zmq_addr')
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.DEALER)
+        self.zmq_socket.setsockopt(zmq.IDENTITY, name)
+        self.zmq_socket.connect(zmq_core_addr)
+
+    def receive(self):
+        obj = self.zmq_socket.recv()
+        event = Event()
+        event.from_json(obj)
+        return event;
+
+    def dispatch(self, event):
+        # dispatch to core
+        event.src = self.name
+        self.zmq_socket.send_unicode(event.to_json())
