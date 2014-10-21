@@ -1,7 +1,8 @@
 from threading import Thread
 from multiprocessing import Process
 
-from reactor.eventbus import ZMQCEventBus
+from reactor.eventbus import ZMQEventBus
+from reactor.eventbus import RedisEventBus
 from reactor.event import Event
 
 class Adapter(Thread):
@@ -13,7 +14,7 @@ class Adapter(Thread):
 
     def init(self):
       # init eventbus
-      self.eventbus = ZMQCEventBus(self.name)
+      self.eventbus = RedisEventBus(self.name)
 
       # notify core
       event = Event("adapter.ready")        

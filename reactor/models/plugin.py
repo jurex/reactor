@@ -1,7 +1,8 @@
 from reactor import component
 from reactor.packet import Packet
 from reactor.models.adapter import Adapter
-from reactor.eventbus import ZMQCEventBus
+from reactor.eventbus import ZMQEventBus
+from reactor.eventbus import RedisEventBus
 from reactor.event import Event
 from reactor import utils
 
@@ -21,7 +22,7 @@ class Plugin(Thread):
         
     def init(self):
         # init eventbus
-        self.eventbus = ZMQCEventBus(self.name)
+        self.eventbus = RedisEventBus(self.name)
 
         # notify core
         event = Event("plugin.ready")        

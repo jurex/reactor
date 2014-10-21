@@ -2,7 +2,8 @@ from reactor import component
 from reactor.managers.device import DeviceManager
 from reactor.event import Event
 from reactor.packet import Packet
-from reactor.eventbus import ZMQEventBus
+from reactor.eventbus import RedisCoreEventBus
+from reactor.eventbus import ZMQCoreEventBus
 from reactor.models.device import Device
 
 import logging
@@ -14,7 +15,7 @@ class Core(component.Component):
         
         self.id = 1
         self.address = 1
-        self.eventbus = ZMQEventBus("@core")
+        self.eventbus = RedisCoreEventBus("@core")
 
     def run(self):
 
