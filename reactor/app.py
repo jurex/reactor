@@ -14,7 +14,7 @@ from reactor.managers.adapter import AdapterManager
 from reactor import logger
 
 # init config
-config = Config('../conf/reactor.yml')
+config = Config('./config/reactor.yml')
 
 # setup logger
 #loglevel = config.get("app", "loglevel")

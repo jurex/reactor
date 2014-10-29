@@ -8,6 +8,7 @@ from reactor.app import App
 from reactor import logger
 from reactor import component
 from reactor.models.device import Device
+from reactor.models.user import User
 from reactor.components.config import Config
 from reactor.components.database import Database
 from reactor.components.database import Base
