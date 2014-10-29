@@ -19,7 +19,34 @@
     <![endif]-->
   </head>
   <body>
-
+    {% if current_user.is_authenticated() %}
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#"><i class="fa fa-code"></i> Reactor</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Dashboard</a></li>
+            <li><a href="/devices">Devices</a></li>
+            <li><a href="/events">Events</a></li>
+            <li><a href="/about">About</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/profile" data-original-title="Profile"><i class="fa fa-user"></i></a></li>
+            <li><a href="/logout" data-original-title="Logout"><i class="fa fa-sign-out"></i></a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    {% endif %}
     {% block content %}{% endblock %}    
   </body>
   {% assets "app_js" %}
