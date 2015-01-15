@@ -6,6 +6,7 @@ logger = logging.getLogger("PluginManager")
 # custom plugins: TODO: auto import by name
 from plugins.echo.echo import EchoPlugin
 from plugins.history.history import HistoryPlugin
+from plugins.websocket.websocket import WebsocketPlugin
 
 class PluginManager(component.Component):
     def __init__(self):

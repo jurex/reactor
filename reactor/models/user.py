@@ -1,5 +1,6 @@
 import os, flask, bcrypt
 from reactor.components.database import Base
+from reactor.models.mixins import CRUDMixin
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy import Column, Date, DateTime, Integer, String
 from sqlalchemy.orm import relationship, backref
@@ -9,7 +10,7 @@ from werkzeug.security import safe_str_cmp
 from sys import version_info as PYVER
 PYVER = PYVER[0]
 
-class User(Base):
+class User(CRUDMixin, Base):
     __tablename__ = "users"
     id = Column('id',Integer , primary_key=True)
     username = Column('username', String(20), unique=True , index=True)
@@ -58,6 +59,3 @@ class User(Base):
             password = password.decode('utf-8')
         password = str(password)
         return safe_str_cmp(bcrypt.hashpw(password, self.password), self.password)
- 
-    def __repr__(self):
-        return '<User %r>' % (self.username)

@@ -8,7 +8,17 @@ if __name__ == '__main__':
 
     # import
     from web import app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    from socketio.server import SocketIOServer
+    from werkzeug.wsgi import SharedDataMiddleware
+    
+    #app.run(host='0.0.0.0', port=5000, debug=True)
+
+    server = SocketIOServer(
+        ('0.0.0.0', 5000),
+        SharedDataMiddleware(app, {}),
+        policy_server=False)
+    
+    server.serve_forever()
 
   else:
     # import

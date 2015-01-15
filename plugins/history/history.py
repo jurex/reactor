@@ -18,8 +18,17 @@ class HistoryPlugin(Plugin):
         self.init()
 
         logger.info("Plugin started. PID: " + str(os.getpid()))
-        
-        while True:
-            event = self.eventbus.receive()
+
+        # subscribe
+        self.eventbus.subscribe("core")
+        self.eventbus.subscribe("adapter")
+        self.eventbus.subscribe("plugin")
+
+        for event in self.eventbus.listen():
             logger.debug("Event received: " + event.to_json())
+
+        
+        #while True:
+        #    event = self.eventbus.receive()
+        #    logger.debug("Event received: " + event.to_json())
     

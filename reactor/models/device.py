@@ -1,10 +1,11 @@
 from reactor.components.database import Base
+from reactor.models.mixins import CRUDMixin
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy import Column, Date, Integer, String
 from sqlalchemy.orm import relationship, backref
 import json
 
-class Device(Base):
+class Device(Base, CRUDMixin):
     """"""
     __tablename__ = "devices"
     id = Column(Integer, primary_key=True)

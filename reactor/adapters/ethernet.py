@@ -69,12 +69,21 @@ class EthernetAdapter(Adapter):
 
             # send event to core
             self.eventbus.dispatch(event)
+
+            # publish event
+            self.eventbus.publish(event, "adapter")
+
             
     def sender(self, socket):
         logger.debug('Waiting for events')
         
-        while True:
-            event = self.eventbus.receive()
+        # subscribe
+        self.eventbus.subscribe("core")
+        self.eventbus.subscribe("plugin")
+
+        # listen for events
+        for event in self.eventbus.listen():
+
             logger.debug("Event received: " + event.to_json())
 
             if(event.name == "device.push"):

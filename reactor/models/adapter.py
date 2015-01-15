@@ -18,7 +18,8 @@ class Adapter(Thread):
 
       # notify core
       event = Event("adapter.ready")        
-      self.eventbus.dispatch(event)
+      #self.eventbus.dispatch(event)
+      self.eventbus.publish(event, "adapter")
    
     def shutdown(self):
         pass

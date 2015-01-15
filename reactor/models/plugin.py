@@ -26,7 +26,8 @@ class Plugin(Thread):
 
         # notify core
         event = Event("plugin.ready")        
-        self.eventbus.dispatch(event)
+        #self.eventbus.dispatch(event)
+        self.eventbus.publish(event, "plugin")
    
     def shutdown(self):
         pass

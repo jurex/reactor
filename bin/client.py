@@ -21,7 +21,7 @@ def main():
     sock = socket(AF_INET,SOCK_DGRAM)
     
     # send messages to server
-    for i in range(0, 3):
+    for i in range(0, 1000):
         packet = Packet()
         packet.src = 25
         packet.dst = 1

@@ -52,6 +52,7 @@ class App(object):
         # TODO: load plugins from config
         self.plugins.load("History")
         self.plugins.load("Echo")
+        #self.plugins.load("Websocket")
         
         # init complete
         logger.debug("App initialized. PID: " + str(os.getpid()))

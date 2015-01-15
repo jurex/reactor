@@ -36,6 +36,14 @@ class Event(object):
     def to_json(self):
         return json.dumps(self.to_dict())
 
+    def from_dict(self, obj):
+        # check type
+        if(type(obj) is not dict):
+            raise NameError('Wrong object type!')
+
+        # set attributes
+        self.__dict__ = obj  
+
     def from_json(self, obj):
         # check type
         if(type(obj) is not str):

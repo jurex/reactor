@@ -6,15 +6,22 @@ from flask import Flask, render_template
 # modules
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
+from flask.ext.restful import Api
 from flask.ext.assets import Environment, Bundle
+from gevent import monkey
 
 WEB_DIR = os.path.abspath(os.path.dirname(__file__))
+
+monkey.patch_all()
 
 # Define the WSGI application object
 app = Flask(__name__, template_folder=os.path.join(WEB_DIR, 'views/'), static_folder=os.path.join(WEB_DIR, 'static/'), static_url_path='/static')
 
 # Configurations
 app.config.from_object('config')
+
+#init api
+api = Api(app)
 
 # init sql alchemy
 db = SQLAlchemy(app)
@@ -30,7 +37,7 @@ assets = Environment(app)
 assets.load_path = [
     os.path.join(WEB_DIR, 'static', 'css'),
     os.path.join(WEB_DIR, 'static', 'js'),
-    os.path.join(WEB_DIR, 'static', 'vendor'),
+    os.path.join(WEB_DIR, 'static', 'components'),
 ]
 
 assets.register(
@@ -39,7 +46,13 @@ assets.register(
         'jquery/dist/jquery.min.js',
         'bootstrap/dist/js/bootstrap.min.js',
         Bundle(
+            'underscore/underscore.js',
+            'backbone/backbone.js',
+            'socket.io-client/socket.io.js',
             'application.js',
+            'views/console.js',
+            'router.js',
+            'initialize.js',
             filters=['jsmin']
         ),
         output='build/app.js'
@@ -61,6 +74,10 @@ assets.register(
 
 from web.controllers import auth
 from web.controllers import dashboard
+from web.controllers import websocket
+
+# api controllers
+from web.controllers.api import users
 
 # Register blueprint(s)
 #app.register_blueprint(auth_module)
