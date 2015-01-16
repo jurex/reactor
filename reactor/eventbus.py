@@ -104,6 +104,29 @@ class RedisEventBus(EventBus):
         self.redis_sub = self.redis.pubsub(ignore_subscribe_messages=True)
 
     def listen(self):
+        while True:
+
+            obj = self.redis.brpop(self.name)
+            #logger.debug(self.name)
+            #logger.debug("redis sub listen msg: " + str(msg))
+
+            try:
+            
+                event = Event()
+                event.from_json(obj[1])
+
+                # suppress self messages
+                if event.src != self.name:
+                    yield event
+
+            except Exception, err:
+                logger.error("could not parse event: " +  str(obj) + " : " + str(err))
+                
+            except:
+                e = sys.exc_info()[0]
+                logger.error("could not parse event: " +  str(obj) + " : " + str(e))
+
+    def listen2(self):
         for msg in self.redis_sub.listen():
             #logger.debug(self.name)
             #logger.debug("redis sub listen msg: " + str(msg))
@@ -128,6 +151,12 @@ class RedisEventBus(EventBus):
         self.redis_sub.subscribe(channel)
 
     def publish(self, event, channel="eventbus"):
+        event.src = self.name
+
+        if event.src != "@core":
+            self.redis.lpush("@core", event.to_json())
+
+    def publish2(self, event, channel="eventbus"):
         event.src = self.name
         self.redis.publish(channel, event.to_json())
 
@@ -157,6 +186,29 @@ class RedisCoreEventBus(EventBus):
         self.redis_sub = self.redis.pubsub(ignore_subscribe_messages=True)
 
     def listen(self):
+        while True:
+
+            obj = self.redis.brpop(self.name)
+            #logger.debug(self.name)
+            #logger.debug("redis core pop msg: " + str(obj))
+
+            try:
+            
+                event = Event()
+                event.from_json(obj[1])
+
+                # suppress self messages
+                if event.src != self.name:
+                    yield event
+
+            except Exception, err:
+                logger.error("could not parse event: " +  str(obj) + " : " + str(err))
+                
+            except:
+                e = sys.exc_info()[0]
+                logger.error("could not parse event: " +  str(obj) + " : " + str(e))
+
+    def listen2(self):
         for msg in self.redis_sub.listen():
             #logger.debug(self.name)
             #logger.debug("redis sub listen msg: " + str(msg))
@@ -179,9 +231,30 @@ class RedisCoreEventBus(EventBus):
     def subscribe(self, channel="eventbus"):
         self.redis_sub.subscribe(channel)
 
-    def publish(self, event, channel="eventbus"):
+    def publish2(self, event, channel="eventbus"):
         event.src = self.name
         #logger.debug("publishing event: " + event.to_json())
+        self.redis.publish(channel, event.to_json())
+
+    def publish(self, event, channel="eventbus"):
+        plugins = component.get("PluginManager")
+        adapters = component.get("AdapterManager")
+
+        # logger.debug("dispatching event: " + event.to_json())
+
+        # dispatch event to all plugins except sender
+        for plugin in plugins:
+            if(plugin.name != event.src and plugin.ready == True):
+                #logger.debug("dispatching to plugin: " + plugin.name)
+                self.redis.lpush(plugin.name, event.to_json())
+
+        # dispatch event to all adapters except sender
+        for adapter in adapters:
+            if(adapter.name != event.src and adapter.ready == True):
+                #logger.debug("dispatching to adapter: " + adapter.name)
+                self.redis.lpush(adapter.name, event.to_json())
+
+        # dispatch to pubsub channel
         self.redis.publish(channel, event.to_json())
 
     def receive(self):

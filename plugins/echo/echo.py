@@ -58,6 +58,5 @@ class EchoPlugin(Plugin):
                 e.data = event.data
 
                 # send command
-                # self.eventbus.dispatch(e)
                 self.eventbus.publish(e, "plugin")
                 

@@ -26,9 +26,6 @@ class HistoryPlugin(Plugin):
 
         for event in self.eventbus.listen():
             logger.debug("Event received: " + event.to_json())
+            #event
 
-        
-        #while True:
-        #    event = self.eventbus.receive()
-        #    logger.debug("Event received: " + event.to_json())
     

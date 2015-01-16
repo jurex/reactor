@@ -19,9 +19,10 @@ def main():
     
     # create udp socket
     sock = socket(AF_INET,SOCK_DGRAM)
+    sock.bind(("0.0.0.0", SERVER_PORT))
     
     # send messages to server
-    for i in range(0, 1000):
+    for i in range(0, 100)
         packet = Packet()
         packet.src = 25
         packet.dst = 1
@@ -38,42 +39,26 @@ def main():
         sock.sendto(packet.to_bytes(), (SERVER_IP, SERVER_PORT))
         print "Packet sent: " + packet.to_string()
         
-        time.sleep(0.001)
+        #time.sleep(0.001)
         
-        
-    # run receive in separate thread
-    #receiver_thread = Thread(target=receiver, args=(sock,))
-    #receiver_thread.start()
-    
     print("Listening for packets...")
     
+    counter = 0
+
     while True:
         # blocking read
         datagram, address = sock.recvfrom(1024) # buffer size is 1024 bytes
     
         # parse message
-        packet = Packet()
-        packet.unpack(datagram)
+        #packet = Packet()
+        #packet.unpack(datagram)
 
-        print("Packet received: " + packet.to_string() + " ip: " + str(address))
-    
-    # wait for responses
-    #time.sleep(20)
-        
-    
-def receiver(sock):
-    #sock.bind(("0.0.0.0", SERVER_PORT))
-    print "Listening for packets..."
-    
-    while True:
-        # blocking read
-        datagram, address = sock.recvfrom(1024) # buffer size is 1024 bytes
-    
-        # parse message
-        packet = Packet()
-        packet.unpack(datagram)
+        counter = counter + 1
 
-        print("Packet received: " + packet.to_string() + " ip: " + str(address))
+        print("Packet received: " + str(datagram) + " ip: " + str(address) + " c: " + str(counter))
+    
+        # wait for responses
+        #time.sleep(20)
 
 if __name__ == '__main__':
     main()

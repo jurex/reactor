@@ -11,6 +11,8 @@ from reactor.event import Event
 from reactor.cache import Cache
 from reactor.components.database import Database
 
+from Queue import Queue
+
 import logging
 import time
 
@@ -32,6 +34,27 @@ class EthernetAdapter(Adapter):
     
     def __init__(self):
         Adapter.__init__(self, "#ethernet")
+
+        self.rq = Queue()
+
+    def publisher(self):
+        counter = 0
+
+        while True:
+            datagram = self.rq.get()
+
+            counter = counter + 1
+
+            # create message
+            event = Event("device.update")
+            event.src = self.name
+            event.data = datagram
+
+            # logger.debug("publish counter: " + str(counter))
+
+            # publish event
+            self.eventbus.publish(event, "adapter")
+
         
     def receiver(self, socket):
 
@@ -43,35 +66,42 @@ class EthernetAdapter(Adapter):
         socket.bind((interface, port))
         
         logger.debug('Binded on port: ' + str(port))
+        counter = 0
         
         while True:
             # blocking read
             datagram, address = socket.recvfrom(1024) # buffer size is 1024 bytes
         
             # parse message
-            packet = Packet()
-            packet.unpack(datagram)
+            #packet = Packet()
+            #packet.unpack(datagram)
+
+            # counter = counter + 1
+
+            #print("receiver counter: " + str(counter))
             
-            logger.debug("Packet received: " + packet.to_string() + " from ip: " + str(address))
+            #logger.debug("Packet received: " + datagram + " from ip: " + str(address))
+
+            # put datagram to queue
+            self.rq.put(datagram)
              
             # update address cache
-            if(packet.src not in self.cache):
-                self.cache[packet.src] = str(address[0])+":"+str(address[1])
-                logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
-            elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
-                self.cache[packet.src] = str(address[0])+":"+str(address[1])
-
+            #if(packet.src not in self.cache):
+            #    self.cache[packet.src] = str(address[0])+":"+str(address[1])
+            #    logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
+            #elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
+            #    self.cache[packet.src] = str(address[0])+":"+str(address[1])
 
             # create message
-            event = Event("device.update")
-            event.src = self.name
-            event.data = packet.to_dict()
+            #event = Event("device.update")
+            #event.src = self.name
+            #event.data = datagram
 
             # send event to core
-            self.eventbus.dispatch(event)
+            # self.eventbus.dispatch(event)
 
             # publish event
-            self.eventbus.publish(event, "adapter")
+            #self.eventbus.publish(event, "adapter")
 
             
     def sender(self, socket):
@@ -87,23 +117,24 @@ class EthernetAdapter(Adapter):
             logger.debug("Event received: " + event.to_json())
 
             if(event.name == "device.push"):
-                packet = Packet()
-                packet.__dict__ = event.data
-                packet.dst = packet.src
-                packet.src = 1
+                #packet = Packet()
+                #packet.__dict__ = event.data
+                #packet.dst = packet.src
+                #packet.src = 1
 
-                logger.debug("packet to send: " + packet.to_json())
+                #logger.debug("packet to send: " + packet.to_json())
                 
-                addr = self.cache.get(packet.dst)
-                if(addr == None):
-                    logger.error("Address not found for device: " + str(packet.dst))
-                    continue
+                #addr = self.cache.get(packet.dst)
+                #if(addr == None):
+                #    logger.error("Address not found for device: " + str(packet.dst))
+                #    continue
                     
-                address = addr.split(":")
+                # address = addr.split(":")
+                address = ["192.168.1.1", 4444]
                 
                 # send packet
-                socket.sendto(packet.to_bytes(), (address[0], int(address[1])))
-                logger.debug("Packet sent: " + packet.to_json() + " to: " + addr)
+                socket.sendto(str(event.data), (address[0], int(address[1])))
+                logger.debug("Packet sent: " + str(event.data) + " to: " + str(address))
                 continue
             
     def run(self):
@@ -118,13 +149,16 @@ class EthernetAdapter(Adapter):
         
         # create udp socket
         self.socket = socket(AF_INET,SOCK_DGRAM)
+        self.socket.setsockopt(SOL_SOCKET, SO_RCVBUF, 1024 * 1024 * 16)
         
         self.init()
         logger.debug('Adapter initlialized')
         
         # spawn green threads
+        g0 = gevent.spawn(self.publisher)
         g1 = gevent.spawn(self.receiver, self.socket)
         g2 = gevent.spawn(self.sender, self.socket)
+
         
         # join threads
-        gevent.joinall([g1,g2])       
+        gevent.joinall([g0,g1,g2])       

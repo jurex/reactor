@@ -43,6 +43,9 @@ class Core(component.Component):
       # process events
       self.process(event)
 
+      # publish event
+      self.eventbus.publish(event, "core")
+
 
   def process(self, event):
     #logger.debug("Processing event: " + event.uuid)
@@ -66,7 +69,7 @@ class Core(component.Component):
     # packet received 
     elif(event.name == "device.update"):
 
-      logger.info("updating device")
+      #logger.info("updating device")
 
       # get device from manager
       #device = devices.get_device_by_id(event.data["id"])
