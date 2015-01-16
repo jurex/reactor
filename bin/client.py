@@ -26,9 +26,9 @@ def main():
         packet = Packet()
         packet.src = 25
         packet.dst = 1
-        packet.cmd = "server.ping"
+        packet.cmd = "device.update"
         packet.seq = i
-        packet.data = {"hello":"word", "counter": i}
+        packet.data = {"sys.banner":"hello world", "io.counter": i}
 
         sock.sendto(packet.to_json(), (SERVER_IP, SERVER_PORT))
         print "Packet sent: " + packet.to_json()

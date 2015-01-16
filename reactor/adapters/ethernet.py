@@ -17,6 +17,8 @@ import traceback
 import logging
 import time
 
+import redis
+
 #import zmq
 import zmq.green as zmq
 
@@ -37,6 +39,7 @@ class EthernetAdapter(Adapter):
         Adapter.__init__(self, "#ethernet")
 
         self.rq = Queue()
+        self.cache = {}
 
     def publisher(self):
         counter = 0
@@ -55,11 +58,27 @@ class EthernetAdapter(Adapter):
                 logger.error("could not parse packet: " +  str(datagram) + " : " + str(err))
                 logger.debug(traceback.format_exc())
                 continue
-        
-            # create event
-            event = Event("device.update")
-            event.src = self.name
-            event.data = packet.data
+
+            # update address  cache
+            if packet.src not in self.cache:
+                self.cache[packet.src] = str(address[0])+":"+str(address[1])
+                logger.debug('ip address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
+                # TODO: persist
+            elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
+                self.cache[packet.src] = str(address[0])+":"+str(address[1])
+
+            # create event based on packet cmd
+            if packet.cmd == "device.update":
+
+                # create event
+                event = Event("device.update")
+                event.src = self.name
+                event.data = packet.data
+                event.data["sys.id"] = packet.src
+
+            else:
+                logger.error("unknown command")
+                continue;
 
             # logger.debug("publish counter: " + str(counter))
 
@@ -81,28 +100,11 @@ class EthernetAdapter(Adapter):
         
         while True:
             # blocking read
-            datagram, address = socket.recvfrom(1024) # buffer size is 1024 bytes
-        
-            # parse message
-            #packet = Packet()
-            #packet.unpack(datagram)
-
-            # counter = counter + 1
-
-            #print("receiver counter: " + str(counter))
-            
-            #logger.debug("Packet received: " + datagram + " from ip: " + str(address))
-
+            datagram, address = socket.recvfrom(1024)
             # put datagram to queue
             self.rq.put([datagram, address])
              
-            # update address cache
-            #if(packet.src not in self.cache):
-            #    self.cache[packet.src] = str(address[0])+":"+str(address[1])
-            #    logger.debug('IP address registred: ' + str(packet.src) + " = " + str(address[0])+":"+str(address[1]))
-            #elif(self.cache[packet.src] != str(address[0])+":"+str(address[1])):
-            #    self.cache[packet.src] = str(address[0])+":"+str(address[1])
-
+            
             # create message
             #event = Event("device.update")
             #event.src = self.name
@@ -130,20 +132,20 @@ class EthernetAdapter(Adapter):
             if(event.name == "device.push"):
                 
                 packet = Packet()
-                packet.dst = 125
+                packet.dst = 25
                 packet.src = 1
                 packet.cmd = event.name
                 packet.data = event.data
 
                 #logger.debug("packet to send: " + packet.to_json())
                 
-                #addr = self.cache.get(packet.dst)
-                #if(addr == None):
-                #    logger.error("Address not found for device: " + str(packet.dst))
-                #    continue
+                addr = self.cache.get(packet.dst)
+                if(addr == None):
+                    logger.error("Address not found for device: " + str(packet.dst))
+                    continue
                     
-                # address = addr.split(":")
-                address = ["192.168.1.1", 4444]
+                address = addr.split(":")
+                #address = ["192.168.1.1", 4444]
                 
                 # send packet
                 socket.sendto(packet.to_json(), (address[0], int(address[1])))
@@ -155,10 +157,6 @@ class EthernetAdapter(Adapter):
         config = component.get("Config")
         # uncomment this if adapter is running in separate process
         #self.db = Database()
-        
-        # init cache // maybe better cache ?
-        self.cache = Cache(self.name)
-        #self.cache = {}
         
         # create udp socket
         self.socket = socket(AF_INET,SOCK_DGRAM)
