@@ -13,6 +13,7 @@ from reactor.components.database import Database
 
 from Queue import Queue
 
+import traceback
 import logging
 import time
 
@@ -41,14 +42,24 @@ class EthernetAdapter(Adapter):
         counter = 0
 
         while True:
-            datagram = self.rq.get()
+            datagram, address = self.rq.get()
+            logger.debug("Packet received: " + datagram + " from ip: " + str(address))
 
-            counter = counter + 1
+            # parse packet
+            try:
+            
+                packet = Packet()
+                packet.from_json(datagram)
 
-            # create message
+            except Exception, err:
+                logger.error("could not parse packet: " +  str(datagram) + " : " + str(err))
+                logger.debug(traceback.format_exc())
+                continue
+        
+            # create event
             event = Event("device.update")
             event.src = self.name
-            event.data = datagram
+            event.data = packet.data
 
             # logger.debug("publish counter: " + str(counter))
 
@@ -83,7 +94,7 @@ class EthernetAdapter(Adapter):
             #logger.debug("Packet received: " + datagram + " from ip: " + str(address))
 
             # put datagram to queue
-            self.rq.put(datagram)
+            self.rq.put([datagram, address])
              
             # update address cache
             #if(packet.src not in self.cache):
@@ -117,10 +128,12 @@ class EthernetAdapter(Adapter):
             logger.debug("Event received: " + event.to_json())
 
             if(event.name == "device.push"):
-                #packet = Packet()
-                #packet.__dict__ = event.data
-                #packet.dst = packet.src
-                #packet.src = 1
+                
+                packet = Packet()
+                packet.dst = 125
+                packet.src = 1
+                packet.cmd = event.name
+                packet.data = event.data
 
                 #logger.debug("packet to send: " + packet.to_json())
                 
@@ -133,8 +146,8 @@ class EthernetAdapter(Adapter):
                 address = ["192.168.1.1", 4444]
                 
                 # send packet
-                socket.sendto(str(event.data), (address[0], int(address[1])))
-                logger.debug("Packet sent: " + str(event.data) + " to: " + str(address))
+                socket.sendto(packet.to_json(), (address[0], int(address[1])))
+                logger.debug("Packet sent: " + packet.to_json() + " to: " + str(address))
                 continue
             
     def run(self):

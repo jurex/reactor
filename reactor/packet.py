@@ -23,9 +23,66 @@ class Packet(object):
         raise NotImplementedError( "Method not implemented" )
 """
 
+class Packet(object):
+
+    def __init__(self):
+        self.dst = 0
+        self.src = 0
+        
+        self.cmd = 0
+        self.seq = 0 
+
+        # packet data
+        self.data =  {}
+
+    def get_random_seq(self):
+        return random.randint(1, 65000)      
+    
+    def to_dict(self):
+        d = self.__dict__.copy()
+        return d
+        
+    def to_string(self):
+        return str(self.to_dict())
+    
+    def to_json(self):
+        return json.dumps(self.to_dict())
+
+    def from_dict(self, obj):
+        # check type
+        if(type(obj) is not dict):
+            raise NameError('wrong object type')
+
+        for key in self.__dict__.keys():
+            if key in obj:
+                setattr(self, key, obj[key])
+            elif key == "data":
+                continue
+            else:
+                raise NameError("missing field: " + key)
+
+        # set attributes
+        self.__dict__ = obj  
+
+    def from_json(self, obj):
+        # check type
+        if(type(obj) is not str):
+            raise NameError('Wrong object type!')    
+        
+        # create dictonary from json strimg
+        json_obj = json.loads(obj)
+
+        for key in self.__dict__.keys():
+            if key in json_obj:
+                setattr(self, key, json_obj[key])
+            elif key == "data":
+                continue
+            else:
+                raise NameError("missing field: " + key)
+
 PACKET_HEADER_STRUCT = struct.Struct('<B H H H B H H')
 
-class Packet(object):
+class BinaryPacket(Packet):
     
     def __init__(self, bytes = None):
         # packet header      # 12 bytes

@@ -18,7 +18,7 @@ class Event(object):
         self.src = src
 
     def __str__(self):
-        return self.to_json()
+        return self.to_string()
 
     def __unicode__(self):
         return self.to_json()
@@ -54,6 +54,4 @@ class Event(object):
 
         # set attributes
         self.__dict__ = json_obj
-    
-    def __str__(self):
-        return self.to_string()
+
